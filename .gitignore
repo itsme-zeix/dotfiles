@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor backup/swap files
+*.swp
+*.swo
+*~
+.*.un~
+
+# Neovim
+nvim/.luarc.json
+
+# Private/local overrides
+*.local
+.env
+.envrc
