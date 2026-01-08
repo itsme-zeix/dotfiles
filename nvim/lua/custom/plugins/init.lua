@@ -135,6 +135,11 @@ return {
             ignored = true,
             auto_close = false,
             jump = { close = false },
+            main = { current = false, float = false, file = true },
+            on_show = function(picker)
+              -- Patch to open files in the window that launched the explorer.
+              picker.main = picker:filter().current_win
+            end,
             win = {
               list = {
                 keys = {
@@ -413,8 +418,28 @@ return {
       -- LSP servers configuration
       local servers = {
         clangd = {},
-        gopls = {},
-        pyrefly = {},
+        gopls = {
+          settings = {
+            gopls = {
+              hints = {
+                assignVariableTypes = true,
+                compositeLiteralFields = true,
+                compositeLiteralTypes = true,
+                constantValues = true,
+                functionTypeParameters = true,
+                parameterNames = true,
+                rangeVariableTypes = true,
+              },
+            },
+          },
+        },
+        ty = {
+          settings = {
+            ty = {
+              -- ty settings here
+            },
+          },
+        },
         ruff = {},
         rust_analyzer = {
           settings = {
