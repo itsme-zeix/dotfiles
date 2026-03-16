@@ -134,12 +134,7 @@ return {
             hidden = true,
             ignored = true,
             auto_close = false,
-            jump = { close = false },
-            main = { current = false, float = false, file = true },
-            on_show = function(picker)
-              -- Patch to open files in the window that launched the explorer.
-              picker.main = picker:filter().current_win
-            end,
+            jump = { close = false, reuse_win = true },
             win = {
               list = {
                 keys = {
@@ -148,6 +143,40 @@ return {
                   ['t'] = { 'tab', mode = { 'n', 'i' } },
                 },
               },
+            },
+            actions = {
+              explorer_paste = function(picker)
+                local Tree = require 'snacks.explorer.tree'
+                local files = vim.split(vim.fn.getreg(vim.v.register or '+') or '', '\n', { plain = true })
+                files = vim.tbl_filter(function(file)
+                  return file ~= '' and (vim.fn.filereadable(file) == 1 or vim.fn.isdirectory(file) == 1)
+                end, files)
+
+                if #files == 0 then
+                  return Snacks.notify.warn(('The `%s` register does not contain any files'):format(vim.v.register or '+'))
+                end
+
+                local dir = picker:dir()
+                for _, src in ipairs(files) do
+                  local name = vim.fn.fnamemodify(src, ':t')
+                  local dest = dir .. '/' .. name
+                  -- Auto-rename if destination exists
+                  local copy_num = 1
+                  while vim.fn.filereadable(dest) == 1 or vim.fn.isdirectory(dest) == 1 do
+                    local ext = vim.fn.fnamemodify(name, ':e')
+                    local base = vim.fn.fnamemodify(name, ':r')
+                    if ext ~= '' then
+                      dest = dir .. '/' .. base .. ' (copy ' .. copy_num .. ').' .. ext
+                    else
+                      dest = dir .. '/' .. name .. ' (copy ' .. copy_num .. ')'
+                    end
+                    copy_num = copy_num + 1
+                  end
+                  vim.fn.system { 'cp', '-r', src, dest }
+                end
+                Tree:refresh(dir)
+                Tree:open(dir)
+              end,
             },
           },
         },
