@@ -699,41 +699,6 @@ return {
     end,
   },
 
-  -- CopilotChat
-  {
-    'CopilotC-Nvim/CopilotChat.nvim',
-    event = 'VeryLazy',
-    dependencies = {
-      { 'nvim-lua/plenary.nvim', branch = 'master' },
-    },
-    build = 'make tiktoken',
-    opts = {
-      model = 'gpt-5.1',
-      window = {
-        layout = 'vertical',
-        width = 0.5,
-        border = 'rounded',
-      },
-      headers = {
-        user = '👤 You',
-        assistant = '🤖 Copilot',
-        tool = '🔧 Tool',
-      },
-      separator = '━━',
-      auto_fold = true,
-    },
-    keys = {
-      { '<leader>cc', '<cmd>CopilotChatToggle<cr>', desc = 'CopilotChat - Toggle' },
-      { '<leader>ce', '<cmd>CopilotChatExplain<cr>', mode = { 'n', 'v' }, desc = 'CopilotChat - Explain' },
-      { '<leader>cr', '<cmd>CopilotChatReview<cr>', mode = { 'n', 'v' }, desc = 'CopilotChat - Review' },
-      { '<leader>cf', '<cmd>CopilotChatFix<cr>', mode = { 'n', 'v' }, desc = 'CopilotChat - Fix' },
-      { '<leader>co', '<cmd>CopilotChatOptimize<cr>', mode = { 'n', 'v' }, desc = 'CopilotChat - Optimize' },
-      { '<leader>cd', '<cmd>CopilotChatDocs<cr>', mode = { 'n', 'v' }, desc = 'CopilotChat - Docs' },
-      { '<leader>ct', '<cmd>CopilotChatTests<cr>', mode = { 'n', 'v' }, desc = 'CopilotChat - Tests' },
-      { '<leader>cm', '<cmd>CopilotChatCommit<cr>', desc = 'CopilotChat - Commit message' },
-    },
-  },
-
   -- Distant (remote development)
   {
     'chipsenkbeil/distant.nvim',
