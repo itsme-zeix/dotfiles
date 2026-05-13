@@ -145,6 +145,27 @@ return {
               },
             },
             actions = {
+              confirm = function(picker, item, action)
+                local previous_buf
+                if item and not item.dir and not picker.input.filter.meta.searching and picker.main and vim.api.nvim_win_is_valid(picker.main) then
+                  previous_buf = vim.api.nvim_win_get_buf(picker.main)
+                end
+
+                require('snacks.explorer.actions').actions.confirm(picker, item, action)
+
+                vim.schedule(function()
+                  if not previous_buf or not vim.api.nvim_buf_is_valid(previous_buf) then
+                    return
+                  end
+                  if previous_buf == vim.api.nvim_get_current_buf() or #vim.fn.win_findbuf(previous_buf) > 0 then
+                    return
+                  end
+                  if vim.bo[previous_buf].buftype ~= '' or not vim.bo[previous_buf].buflisted then
+                    return
+                  end
+                  Snacks.bufdelete { buf = previous_buf }
+                end)
+              end,
               explorer_paste = function(picker)
                 local Tree = require 'snacks.explorer.tree'
                 local files = vim.split(vim.fn.getreg(vim.v.register or '+') or '', '\n', { plain = true })
