@@ -122,3 +122,6 @@ export KUBECONFIG=~/.kube/k3s-remote.yaml
 export PATH="/opt/homebrew/opt/binutils/bin:$PATH"
 export PATH="/opt/homebrew/bin:$PATH"
 export PATH="/opt/homebrew/opt/findutils/libexec/gnubin:$PATH"
+
+# Source - https://stackoverflow.com/a/52093887
+alias gdnew="for next in \$( git ls-files --others --exclude-standard ) ; do git --no-pager diff --no-index /dev/null \$next; done;"
