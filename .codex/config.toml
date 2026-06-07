@@ -14,3 +14,7 @@ unified_exec = true
 apply_patch_freeform = true
 skills = true
 shell_snapshot = true
+
+[memories]
+use_memories = false
+generate_memories = true
