@@ -1,17 +1,14 @@
 # Dotfiles
 
-This repo uses GNU Stow as the symlink manager. Package folders stay
-human-friendly, and `install.sh` maps each package to the right live target.
+GNU Stow is used only for Vim and Neovim right now.
 
-## Layout
+Managed paths:
 
-- `vim/` links into `$HOME`, so it manages `~/.vimrc` and `~/.vim/`.
-- `nvim/` links into `~/.config/nvim`, so the repo stays easy to edit as
-  `nvim/init.lua`, `nvim/lua/...`, and `nvim/lazy-lock.json`.
+- `~/.vimrc`
+- `~/.vim/`
+- `~/.config/nvim/`
 
-## Commands
-
-Install Stow first:
+Install Stow:
 
 ```sh
 brew install stow
@@ -19,28 +16,22 @@ brew install stow
 
 On Linux, use your package manager, for example `sudo apt install stow`.
 
-Preview first-install backups and validate that Stow can plan the links:
+Preview what would happen:
 
 ```sh
 make dry-run
 ```
 
-Back up existing live Vim/Neovim config paths and link the repo:
+Back up existing live Vim/Neovim paths and create the links:
 
 ```sh
 make install
 ```
 
-Re-link after package changes:
-
-```sh
-make restow
-```
-
-Remove Stow-managed symlinks:
+Remove Stow-managed links:
 
 ```sh
 make unstow
 ```
 
-Backups made by `make install` are written under `~/.dotfiles-backup/`.
+Backups from `make install` go under `~/.dotfiles-backup/`.
