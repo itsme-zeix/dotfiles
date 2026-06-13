@@ -26,9 +26,11 @@ set linebreak
 " Display line and column number on the lower-right corner.
 set ruler
 " Enable 24-bit colors
-" set termguicolors
-" Use gruvbox as colourscheme
-color gruvbox 
+if has('termguicolors')
+  set termguicolors
+endif
+" Use custom Catppuccin colourscheme
+color catppuccin-custom
 set background=dark
 " To get around problem with seemingly random characters appear in certain
 " teminals.
