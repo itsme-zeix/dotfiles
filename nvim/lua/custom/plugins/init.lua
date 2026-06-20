@@ -22,7 +22,7 @@ return {
         local gitsigns = require 'gitsigns'
         local function map(mode, l, r, opts)
           opts = opts or {}
-          opts.buffer = bufnr
+          opts.buf = bufnr
           vim.keymap.set(mode, l, r, opts)
         end
 
@@ -44,12 +44,8 @@ return {
         end, { desc = 'Jump to previous git [c]hange' })
 
         -- Actions (visual mode)
-        map('v', '<leader>hs', function()
-          gitsigns.stage_hunk { vim.fn.line '.', vim.fn.line 'v' }
-        end, { desc = 'git [s]tage hunk' })
-        map('v', '<leader>hr', function()
-          gitsigns.reset_hunk { vim.fn.line '.', vim.fn.line 'v' }
-        end, { desc = 'git [r]eset hunk' })
+        map('v', '<leader>hs', function() gitsigns.stage_hunk { vim.fn.line '.', vim.fn.line 'v' } end, { desc = 'git [s]tage hunk' })
+        map('v', '<leader>hr', function() gitsigns.reset_hunk { vim.fn.line '.', vim.fn.line 'v' } end, { desc = 'git [r]eset hunk' })
 
         -- Actions (normal mode)
         map('n', '<leader>hs', gitsigns.stage_hunk, { desc = 'git [s]tage hunk' })
@@ -60,9 +56,7 @@ return {
         map('n', '<leader>hi', gitsigns.preview_hunk_inline, { desc = 'git preview hunk [i]nline' })
         map('n', '<leader>hb', gitsigns.blame_line, { desc = 'git [b]lame line' })
         map('n', '<leader>hd', gitsigns.diffthis, { desc = 'git [d]iff against index' })
-        map('n', '<leader>hD', function()
-          gitsigns.diffthis '@'
-        end, { desc = 'git [D]iff against last commit' })
+        map('n', '<leader>hD', function() gitsigns.diffthis '@' end, { desc = 'git [D]iff against last commit' })
 
         -- Toggles
         map('n', '<leader>tb', gitsigns.toggle_current_line_blame, { desc = '[T]oggle git show [b]lame line' })
@@ -123,6 +117,28 @@ return {
     'folke/snacks.nvim',
     priority = 1000,
     lazy = false,
+    init = function()
+      vim.api.nvim_create_autocmd('WinClosed', {
+        group = vim.api.nvim_create_augroup('custom-snacks-explorer-quit', { clear = true }),
+        desc = 'Quit Neovim when only Snacks explorer windows remain',
+        callback = function()
+          vim.schedule(function()
+            local snacks = rawget(_G, 'Snacks')
+            if not snacks or not snacks.picker then return end
+            if #snacks.picker.get { source = 'explorer' } == 0 then return end
+
+            for _, tab in ipairs(vim.api.nvim_list_tabpages()) do
+              for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+                local buf = vim.api.nvim_win_get_buf(win)
+                if not vim.bo[buf].filetype:match '^snacks_' then return end
+              end
+            end
+
+            vim.cmd 'confirm quitall'
+          end)
+        end,
+      })
+    end,
     opts = {
       bigfile = { enabled = true },
       explorer = { enabled = true },
@@ -154,28 +170,18 @@ return {
                 require('snacks.explorer.actions').actions.confirm(picker, item, action)
 
                 vim.schedule(function()
-                  if not previous_buf or not vim.api.nvim_buf_is_valid(previous_buf) then
-                    return
-                  end
-                  if previous_buf == vim.api.nvim_get_current_buf() or #vim.fn.win_findbuf(previous_buf) > 0 then
-                    return
-                  end
-                  if vim.bo[previous_buf].buftype ~= '' or not vim.bo[previous_buf].buflisted then
-                    return
-                  end
+                  if not previous_buf or not vim.api.nvim_buf_is_valid(previous_buf) then return end
+                  if previous_buf == vim.api.nvim_get_current_buf() or #vim.fn.win_findbuf(previous_buf) > 0 then return end
+                  if vim.bo[previous_buf].buftype ~= '' or not vim.bo[previous_buf].buflisted then return end
                   Snacks.bufdelete { buf = previous_buf }
                 end)
               end,
               explorer_paste = function(picker)
                 local Tree = require 'snacks.explorer.tree'
                 local files = vim.split(vim.fn.getreg(vim.v.register or '+') or '', '\n', { plain = true })
-                files = vim.tbl_filter(function(file)
-                  return file ~= '' and (vim.fn.filereadable(file) == 1 or vim.fn.isdirectory(file) == 1)
-                end, files)
+                files = vim.tbl_filter(function(file) return file ~= '' and (vim.fn.filereadable(file) == 1 or vim.fn.isdirectory(file) == 1) end, files)
 
-                if #files == 0 then
-                  return Snacks.notify.warn(('The `%s` register does not contain any files'):format(vim.v.register or '+'))
-                end
+                if #files == 0 then return Snacks.notify.warn(('The `%s` register does not contain any files'):format(vim.v.register or '+')) end
 
                 local dir = picker:dir()
                 for _, src in ipairs(files) do
@@ -209,160 +215,116 @@ return {
       -- Picker
       {
         '<leader><space>',
-        function()
-          Snacks.picker.smart()
-        end,
+        function() Snacks.picker.smart() end,
         desc = 'Smart Find Files',
       },
       {
         '<leader>,',
-        function()
-          Snacks.picker.buffers()
-        end,
+        function() Snacks.picker.buffers() end,
         desc = 'Buffers',
       },
       {
         '<leader>/',
-        function()
-          Snacks.picker.grep()
-        end,
+        function() Snacks.picker.grep() end,
         desc = 'Grep',
       },
       {
         '<leader>:',
-        function()
-          Snacks.picker.command_history()
-        end,
+        function() Snacks.picker.command_history() end,
         desc = 'Command History',
       },
       {
         '<leader>sf',
-        function()
-          Snacks.picker.files()
-        end,
+        function() Snacks.picker.files() end,
         desc = '[S]earch [F]iles',
       },
       {
         '<leader>sg',
-        function()
-          Snacks.picker.grep()
-        end,
+        function() Snacks.picker.grep() end,
         desc = '[S]earch by [G]rep',
       },
       {
         '<leader>sw',
-        function()
-          Snacks.picker.grep_word()
-        end,
+        function() Snacks.picker.grep_word() end,
         desc = '[S]earch current [W]ord',
       },
       {
         '<leader>sh',
-        function()
-          Snacks.picker.help()
-        end,
+        function() Snacks.picker.help() end,
         desc = '[S]earch [H]elp',
       },
       {
         '<leader>sk',
-        function()
-          Snacks.picker.keymaps()
-        end,
+        function() Snacks.picker.keymaps() end,
         desc = '[S]earch [K]eymaps',
       },
       {
         '<leader>sd',
-        function()
-          Snacks.picker.diagnostics()
-        end,
+        function() Snacks.picker.diagnostics() end,
         desc = '[S]earch [D]iagnostics',
       },
       {
         '<leader>sr',
-        function()
-          Snacks.picker.resume()
-        end,
+        function() Snacks.picker.resume() end,
         desc = '[S]earch [R]esume',
       },
       {
         '<leader>s.',
-        function()
-          Snacks.picker.recent()
-        end,
+        function() Snacks.picker.recent() end,
         desc = '[S]earch Recent Files',
       },
       {
         '<leader>sn',
-        function()
-          Snacks.picker.files { cwd = vim.fn.stdpath 'config' }
-        end,
+        function() Snacks.picker.files { cwd = vim.fn.stdpath 'config' } end,
         desc = '[S]earch [N]eovim files',
       },
       {
         '<leader>gc',
-        function()
-          Snacks.picker.git_log()
-        end,
+        function() Snacks.picker.git_log() end,
         desc = 'Git Log',
       },
       {
         '<leader>gs',
-        function()
-          Snacks.picker.git_status()
-        end,
+        function() Snacks.picker.git_status() end,
         desc = 'Git Status',
       },
 
       -- Explorer
       {
         '<leader>e',
-        function()
-          Snacks.explorer()
-        end,
+        function() Snacks.explorer() end,
         desc = 'File [E]xplorer',
       },
 
       -- LSP (via snacks picker)
       {
         'grd',
-        function()
-          Snacks.picker.lsp_definitions()
-        end,
+        function() Snacks.picker.lsp_definitions() end,
         desc = '[G]oto [D]efinition',
       },
       {
         'grr',
-        function()
-          Snacks.picker.lsp_references()
-        end,
+        function() Snacks.picker.lsp_references() end,
         desc = '[G]oto [R]eferences',
       },
       {
         'gri',
-        function()
-          Snacks.picker.lsp_implementations()
-        end,
+        function() Snacks.picker.lsp_implementations() end,
         desc = '[G]oto [I]mplementation',
       },
       {
         'grt',
-        function()
-          Snacks.picker.lsp_type_definitions()
-        end,
+        function() Snacks.picker.lsp_type_definitions() end,
         desc = '[G]oto [T]ype Definition',
       },
       {
         'gO',
-        function()
-          Snacks.picker.lsp_symbols()
-        end,
+        function() Snacks.picker.lsp_symbols() end,
         desc = 'Document Symbols',
       },
       {
         'gW',
-        function()
-          Snacks.picker.lsp_workspace_symbols()
-        end,
+        function() Snacks.picker.lsp_workspace_symbols() end,
         desc = 'Workspace Symbols',
       },
     },
@@ -395,26 +357,18 @@ return {
         callback = function(event)
           local map = function(keys, func, desc, mode)
             mode = mode or 'n'
-            vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
+            vim.keymap.set(mode, keys, func, { buf = event.buf, desc = 'LSP: ' .. desc })
           end
 
-          -- Native gr* keymaps for Neovim 0.11+
+          -- Native gr* keymaps
           map('grn', vim.lsp.buf.rename, '[R]e[n]ame')
           map('gra', vim.lsp.buf.code_action, '[G]oto Code [A]ction', { 'n', 'x' })
           map('grD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
-          local function client_supports_method(client, method, bufnr)
-            if vim.fn.has 'nvim-0.11' == 1 then
-              return client:supports_method(method, bufnr)
-            else
-              return client.supports_method(method, { bufnr = bufnr })
-            end
-          end
-
           local client = vim.lsp.get_client_by_id(event.data.client_id)
 
           -- Highlight references on cursor hold
-          if client and client_supports_method(client, vim.lsp.protocol.Methods.textDocument_documentHighlight, event.buf) then
+          if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, event.buf) then
             local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
             vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
               buffer = event.buf,
@@ -436,10 +390,8 @@ return {
           end
 
           -- Inlay hints toggle
-          if client and client_supports_method(client, vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
-            map('<leader>th', function()
-              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
-            end, '[T]oggle Inlay [H]ints')
+          if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
+            map('<leader>th', function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }) end, '[T]oggle Inlay [H]ints')
           end
         end,
       })
@@ -508,20 +460,21 @@ return {
         },
       }
 
+      vim.lsp.config('*', {
+        capabilities = capabilities,
+      })
+
+      for server_name, server in pairs(servers) do
+        vim.lsp.config(server_name, server)
+      end
+
       local ensure_installed = vim.tbl_keys(servers or {})
-      vim.list_extend(ensure_installed, { 'stylua' })
+      vim.list_extend(ensure_installed, { 'stylua', 'alejandra' })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
         ensure_installed = {},
-        automatic_installation = false,
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
+        automatic_enable = vim.tbl_keys(servers or {}),
       }
     end,
   },
@@ -534,9 +487,7 @@ return {
     keys = {
       {
         '<leader>f',
-        function()
-          require('conform').format { async = true, lsp_format = 'fallback' }
-        end,
+        function() require('conform').format { async = true, lsp_format = 'fallback' } end,
         mode = '',
         desc = '[F]ormat buffer',
       },
@@ -545,13 +496,12 @@ return {
       notify_on_error = false,
       format_on_save = function(bufnr)
         local disable_filetypes = { c = true, cpp = true }
-        if disable_filetypes[vim.bo[bufnr].filetype] then
-          return nil
-        end
+        if disable_filetypes[vim.bo[bufnr].filetype] then return nil end
         return { timeout_ms = 500, lsp_format = 'fallback' }
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        nix = { 'alejandra' },
         python = { 'ruff_format' },
       },
     },
@@ -567,9 +517,7 @@ return {
         'L3MON4D3/LuaSnip',
         version = '2.*',
         build = (function()
-          if vim.fn.has 'win32' == 1 or vim.fn.executable 'make' == 0 then
-            return
-          end
+          if vim.fn.has 'win32' == 1 or vim.fn.executable 'make' == 0 then return end
           return 'make install_jsregexp'
         end)(),
         opts = {},
@@ -594,17 +542,59 @@ return {
     },
   },
 
-  -- Colorscheme: Kanagawa (primary)
+  -- Colorscheme: Kanagawa Dragon
+  -- {
+  --   'rebelot/kanagawa.nvim',
+  --   priority = 1000,
+  --   config = function()
+  --     require('kanagawa').setup {
+  --       theme = 'dragon',
+  --     }
+  --
+  --     vim.cmd.colorscheme 'kanagawa-dragon'
+  --     vim.cmd.hi 'Comment gui=none'
+  --   end,
+  -- },
+
+  -- Colorscheme: Modified Catppuccin
   {
-    'rebelot/kanagawa.nvim',
+    'catppuccin/nvim',
+    name = 'catppuccin',
     priority = 1000,
     config = function()
-      vim.cmd.colorscheme 'kanagawa-dragon'
+      require('catppuccin').setup {
+        flavour = 'mocha',
+        no_italic = true,
+        color_overrides = {
+          mocha = {
+            base = '#212121',
+            mantle = '#212121',
+            crust = '#212121',
+          },
+          macchiato = {
+            base = '#212121',
+            mantle = '#212121',
+            crust = '#212121',
+          },
+        },
+        custom_highlights = function()
+          return {
+            Normal = { bg = '#212121' },
+            NormalNC = { bg = '#212121' },
+            NormalFloat = { bg = '#212121' },
+            FloatBorder = { bg = '#212121' },
+            SignColumn = { bg = '#212121' },
+            EndOfBuffer = { bg = '#212121' },
+          }
+        end,
+      }
+
+      vim.cmd.colorscheme 'catppuccin'
       vim.cmd.hi 'Comment gui=none'
     end,
   },
 
-  -- Colorscheme: Tokyonight (alternative, uncomment to use)
+  -- Colorscheme: Tokyonight
   -- {
   --   'folke/tokyonight.nvim',
   --   priority = 1000,
@@ -634,9 +624,7 @@ return {
       local statusline = require 'mini.statusline'
       statusline.setup { use_icons = vim.g.have_nerd_font }
       ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
-      end
+      statusline.section_location = function() return '%2l:%-2v' end
     end,
   },
 
@@ -662,6 +650,7 @@ return {
         'luadoc',
         'markdown',
         'markdown_inline',
+        'nix',
         'python',
         'query',
         'rust',
@@ -685,6 +674,8 @@ return {
     'lukas-reineke/indent-blankline.nvim',
     main = 'ibl',
     opts = function(_, opts)
+      opts.indent = opts.indent or {}
+      opts.indent.char = '▏'
       return require('indent-rainbowline').make_opts(opts)
     end,
     dependencies = { 'TheGLander/indent-rainbowline.nvim' },
@@ -694,9 +685,7 @@ return {
   {
     'windwp/nvim-autopairs',
     event = 'InsertEnter',
-    config = function()
-      require('nvim-autopairs').setup {}
-    end,
+    config = function() require('nvim-autopairs').setup {} end,
   },
 
   -- Distant (remote development)
