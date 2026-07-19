@@ -208,7 +208,7 @@ return {
           },
         },
       },
-      quickfile = { enabled = true },
+      quickfile = { enabled = false },
       words = { enabled = true },
     },
     keys = {
@@ -631,42 +631,31 @@ return {
   -- Treesitter
   {
     'nvim-treesitter/nvim-treesitter',
+    branch = 'main',
+    lazy = false,
     build = ':TSUpdate',
-    main = 'nvim-treesitter.configs',
-    opts = {
-      ensure_installed = {
-        'bash',
-        'c',
-        'cpp',
-        'css',
-        'diff',
-        'go',
-        'gomod',
-        'gosum',
-        'html',
-        'javascript',
-        'json',
-        'lua',
-        'luadoc',
-        'markdown',
-        'markdown_inline',
-        'nix',
-        'python',
-        'query',
-        'rust',
-        'toml',
-        'typescript',
-        'vim',
-        'vimdoc',
-        'yaml',
-      },
-      auto_install = true,
-      highlight = {
-        enable = true,
-        additional_vim_regex_highlighting = { 'ruby' },
-      },
-      indent = { enable = true, disable = { 'ruby' } },
-    },
+    config = function()
+      local treesitter = require 'nvim-treesitter'
+      local disabled = { markdown = true, markdown_inline = true }
+
+      treesitter.setup { install_dir = vim.fn.stdpath('data') .. '/site' }
+      local function enable_treesitter(buf)
+        if disabled[vim.bo[buf].filetype] then return end
+        pcall(vim.treesitter.start, buf)
+        if vim.bo[buf].filetype ~= 'ruby' then
+          vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end
+      end
+
+      vim.api.nvim_create_autocmd('FileType', {
+        group = vim.api.nvim_create_augroup('custom-treesitter', { clear = true }),
+        callback = function(event) enable_treesitter(event.buf) end,
+      })
+
+      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].filetype ~= '' then enable_treesitter(buf) end
+      end
+    end,
   },
 
   -- Indent rainbow lines
