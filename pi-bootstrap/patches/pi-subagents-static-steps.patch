@@ -1,0 +1,101 @@
+diff --git a/src/tui/render.ts b/src/tui/render.ts
+--- a/src/tui/render.ts
++++ b/src/tui/render.ts
+@@ -129,7 +129,8 @@
+ 	return lines;
+ }
+ 
+-const RUNNING_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
++// Match the parent Working indicator while keeping child state rows static.
++const RUNNING_FRAMES = ["⠖", "⠲", "⢲", "⢰", "⣰", "⣠", "⣄", "⣆", "⡆", "⡖"];
+ const STATIC_RUNNING_GLYPH = "●";
+ 
+ type ProgressSeedSource = Partial<Pick<AgentProgress, "index" | "toolCount" | "tokens" | "durationMs" | "lastActivityAt" | "currentToolStartedAt" | "turnCount">>;
+@@ -419,8 +420,7 @@
+ 	frame?: number;
+ }): ResultPresentation {
+ 	if (input.running) {
+-		const glyph = input.frame !== undefined ? runningGlyph((input.seed ?? 0) + input.frame) : runningGlyph(input.seed);
+-		return { glyph, label: "running", tone: "accent" };
++		return { glyph: "□", label: "running", tone: "accent" };
+ 	}
+ 	if (input.detached) return { glyph: "■", label: "detached", tone: "warning" };
+ 	if (input.stopped) return { glyph: "■", label: "stopped", tone: "warning" };
+@@ -587,12 +587,12 @@
+ }
+ 
+-function widgetStepGlyph(status: AsyncJobStep["status"], theme: Theme, seed?: number, frame?: number): string {
++function widgetStepGlyph(status: AsyncJobStep["status"], theme: Theme, _seed?: number, _frame?: number): string {
+-	if (status === "running") return theme.fg("accent", runningGlyph(animatedSeed(seed, frame)));
+-	if (status === "complete" || status === "completed") return theme.fg("success", "✓");
++	if (status === "running") return theme.fg("accent", "□");
++	if (status === "complete" || status === "completed") return theme.fg("success", "✔");
+ 	if (status === "failed") return theme.fg("error", "✗");
+ 	if (status === "paused") return theme.fg("warning", "■");
+ 	if (status === "stopped") return theme.fg("warning", "■");
+-	return theme.fg("muted", "◦");
++	return theme.fg("muted", "□");
+ }
+ 
+ function widgetStepStatus(status: AsyncJobStep["status"], theme: Theme): string {
+@@ -978,12 +978,12 @@
+ }
+ 
+-function nestedStatusGlyph(state: NestedRunSummary["state"] | NestedStepSummary["status"], theme: Theme, seed?: number): string {
++function nestedStatusGlyph(state: NestedRunSummary["state"] | NestedStepSummary["status"], theme: Theme, _seed?: number): string {
+-	if (state === "running") return theme.fg("accent", runningGlyph(seed));
+-	if (state === "complete" || state === "completed") return theme.fg("success", "✓");
++	if (state === "running") return theme.fg("accent", "□");
++	if (state === "complete" || state === "completed") return theme.fg("success", "✔");
+ 	if (state === "failed") return theme.fg("error", "✗");
+ 	if (state === "paused") return theme.fg("warning", "■");
+ 	if (state === "stopped") return theme.fg("warning", "■");
+-	return theme.fg("muted", "◦");
++	return theme.fg("muted", "□");
+ }
+ 
+ function nestedRunSeed(run: NestedRunSummary): number | undefined {
+@@ -1598,8 +1598,8 @@
+ }
+ 
+-function workflowRowGlyph(row: WorkflowChatProgressRow, theme: Theme, frame?: number): string {
++function workflowRowGlyph(row: WorkflowChatProgressRow, theme: Theme, _frame?: number): string {
+-	if (row.state === "running") return theme.fg("accent", runningGlyph(frame));
+-	if (row.state === "complete") return theme.fg("success", "✓");
++	if (row.state === "running") return theme.fg("accent", "□");
++	if (row.state === "complete") return theme.fg("success", "✔");
+ 	return theme.fg("error", "✗");
+ }
+ 
+diff --git a/src/tui/fleet-status.ts b/src/tui/fleet-status.ts
+--- a/src/tui/fleet-status.ts
++++ b/src/tui/fleet-status.ts
+@@ -87,9 +87,9 @@
+ }
+ 
+ function nestedStatusGlyph(state: FleetNestedRow["state"], theme: Theme): string {
+-	if (state === "running") return theme.fg("accent", "●");
+-	if (state === "queued" || state === "pending") return theme.fg("muted", "◦");
+-	if (state === "complete" || state === "completed") return theme.fg("success", "✓");
++	if (state === "running") return theme.fg("accent", "□");
++	if (state === "queued" || state === "pending") return theme.fg("muted", "□");
++	if (state === "complete" || state === "completed") return theme.fg("success", "✔");
+ 	if (state === "failed" || state === "rejected") return theme.fg("error", "✗");
+ 	return theme.fg("warning", "■");
+ }
+diff --git a/src/tui/fleet.ts b/src/tui/fleet.ts
+--- a/src/tui/fleet.ts
++++ b/src/tui/fleet.ts
+@@ -248,9 +248,9 @@
+ }
+ 
+ function statusGlyph(item: FleetItem, theme: Theme): string {
+-	if (item.state === "running") return theme.fg("accent", "●");
+-	if (item.state === "queued" || item.state === "pending") return theme.fg("muted", "◦");
+-	if (item.state === "complete" || item.state === "completed") return theme.fg("success", "✓");
++	if (item.state === "running") return theme.fg("accent", "□");
++	if (item.state === "queued" || item.state === "pending") return theme.fg("muted", "□");
++	if (item.state === "complete" || item.state === "completed") return theme.fg("success", "✔");
+ 	if (item.state === "paused" || item.state === "stopped" || item.state === "detached") return theme.fg("warning", "■");
+ 	return theme.fg("error", "✗");
+ }

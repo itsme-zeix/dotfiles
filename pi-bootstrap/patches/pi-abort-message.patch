@@ -1,0 +1,29 @@
+diff --git a/dist/modes/interactive/interactive-mode.js b/dist/modes/interactive/interactive-mode.js
+--- a/dist/modes/interactive/interactive-mode.js
++++ b/dist/modes/interactive/interactive-mode.js
+@@ -2577,10 +2577,11 @@
+                     let errorMessage;
+                     if (this.streamingMessage.stopReason === "aborted") {
+                         const retryAttempt = this.session.retryAttempt;
+-                        errorMessage =
++                        const defaultErrorMessage =
+                             retryAttempt > 0
+                                 ? `Aborted after ${retryAttempt} retry attempt${retryAttempt > 1 ? "s" : ""}`
+                                 : "Operation aborted";
++                        errorMessage = this.streamingMessage.errorMessage || defaultErrorMessage;
+                         this.streamingMessage.errorMessage = errorMessage;
+                     }
+                     this.streamingComponent.updateContent(this.streamingMessage, false);
+@@ -2919,10 +2920,11 @@
+                             let errorMessage;
+                             if (message.stopReason === "aborted") {
+                                 const retryAttempt = this.session.retryAttempt;
+-                                errorMessage =
++                                const defaultErrorMessage =
+                                     retryAttempt > 0
+                                         ? `Aborted after ${retryAttempt} retry attempt${retryAttempt > 1 ? "s" : ""}`
+                                         : "Operation aborted";
++                                errorMessage = message.errorMessage || defaultErrorMessage;
+                             }
+                             else {
+                                 errorMessage = message.errorMessage || "Error";

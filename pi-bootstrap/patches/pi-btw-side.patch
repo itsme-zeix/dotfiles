@@ -1,0 +1,70 @@
+--- a/extensions/btw.ts
++++ b/extensions/btw.ts
+@@ -2251,56 +2251,58 @@
+     });
+   }
+ 
+-  pi.registerCommand("btw", {
++  const sideCommand: Parameters<ExtensionAPI["registerCommand"]>[1] = {
+     description: "Continue a side conversation in a focused BTW modal. Add --save to also persist a visible note.",
+     handler: async (args, ctx) => {
+       await dispatchBtwCommand("btw", args, ctx);
+     },
+-  });
++  };
++  pi.registerCommand("side", sideCommand);
++  pi.registerCommand("btw-in-thread", sideCommand);
+ 
+-  pi.registerCommand("btw:tangent", {
++  pi.registerCommand("side:tangent", {
+     description: "Start or continue a contextless BTW tangent in the focused BTW modal.",
+     handler: async (args, ctx) => {
+       await dispatchBtwCommand("btw:tangent", args, ctx);
+     },
+   });
+ 
+-  pi.registerCommand("btw:new", {
++  pi.registerCommand("side:new", {
+     description: "Start a fresh BTW thread with main-session context. Optionally ask the first question immediately.",
+     handler: async (args, ctx) => {
+       await dispatchBtwCommand("btw:new", args, ctx);
+     },
+   });
+ 
+-  pi.registerCommand("btw:clear", {
++  pi.registerCommand("side:clear", {
+     description: "Dismiss the BTW modal/widget and clear the current thread.",
+     handler: async (args, ctx) => {
+       await dispatchBtwCommand("btw:clear", args, ctx);
+     },
+   });
+ 
+-  pi.registerCommand("btw:inject", {
++  pi.registerCommand("side:inject", {
+     description: "Inject the full BTW thread into the main agent as a user message.",
+     handler: async (args, ctx) => {
+       await dispatchBtwCommand("btw:inject", args, ctx);
+     },
+   });
+ 
+-  pi.registerCommand("btw:summarize", {
++  pi.registerCommand("side:summarize", {
+     description: "Summarize the BTW thread, then inject the summary into the main agent.",
+     handler: async (args, ctx) => {
+       await dispatchBtwCommand("btw:summarize", args, ctx);
+     },
+   });
+ 
+-  pi.registerCommand("btw:model", {
++  pi.registerCommand("side:model", {
+     description: "Show, set, or clear the BTW-only model override.",
+     handler: async (args, ctx) => {
+       await dispatchBtwCommand("btw:model", args, ctx);
+     },
+   });
+ 
+-  pi.registerCommand("btw:thinking", {
++  pi.registerCommand("side:thinking", {
+     description: "Show, set, or clear the BTW-only thinking override.",
+     handler: async (args, ctx) => {
+       await dispatchBtwCommand("btw:thinking", args, ctx);

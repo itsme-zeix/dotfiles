@@ -1,4 +1,4 @@
-.PHONY: dry-run stow install restow unstow
+.PHONY: dry-run stow install restow unstow test
 
 dry-run:
 	./install.sh dry-run
@@ -14,3 +14,6 @@ restow:
 
 unstow:
 	./install.sh unstow
+
+test:
+	./tests/install-pi.sh

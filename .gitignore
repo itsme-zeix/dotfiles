@@ -12,6 +12,9 @@
 # Neovim
 nvim/.luarc.json
 
+# Pi runtime artifacts
+.pi/subagents/
+
 # Private/local overrides
 *.local
 .env

@@ -3,7 +3,23 @@ set -euo pipefail
 
 DOTFILES_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_ROOT="${BACKUP_ROOT:-$HOME/.dotfiles-backup}"
-DEFAULT_PACKAGES=(vim nvim)
+DEFAULT_PACKAGES=(vim nvim pi)
+PI_MANAGED_PATHS=(
+  AGENTS.md
+  extensions/project-status.ts
+  extensions/mutation-stats.ts
+  extensions/turn-timer.ts
+  extensions/workflow.ts
+  skills/adversarial-review/SKILL.md
+  skills/ketch-research/SKILL.md
+  skills/local-simplifier/SKILL.md
+  skills/pattern-scout/SKILL.md
+  prompts/devils-advocate.md
+  prompts/pattern-scout.md
+  prompts/review.md
+  prompts/review-and-simplify.md
+  prompts/simplify.md
+)
 
 usage() {
   cat <<'EOF'
@@ -20,8 +36,9 @@ Commands:
 Packages:
   vim       Links into $HOME
   nvim      Links into $HOME/.config/nvim
+  pi        Links durable config into $HOME/.pi/agent
 
-Defaults to: vim nvim
+Defaults to: vim nvim pi
 EOF
 }
 
@@ -50,6 +67,9 @@ target_for_package() {
     nvim)
       printf '%s\n' "$HOME/.config/nvim"
       ;;
+    pi)
+      printf '%s\n' "$HOME/.pi/agent"
+      ;;
     *)
       printf 'Unknown package: %s\n' "$1" >&2
       exit 2
@@ -63,6 +83,9 @@ ensure_target_for_package() {
       ;;
     nvim)
       mkdir -p "$HOME/.config/nvim"
+      ;;
+    pi)
+      mkdir -p "$HOME/.pi/agent"
       ;;
   esac
 }
@@ -147,6 +170,12 @@ show_backup_plan() {
     nvim)
       show_backup_path "$HOME/.config/nvim"
       ;;
+    pi)
+      local path
+      for path in "${PI_MANAGED_PATHS[@]}"; do
+        show_backup_path "$HOME/.pi/agent/$path"
+      done
+      ;;
   esac
 }
 
@@ -176,6 +205,12 @@ backup_package() {
       ;;
     nvim)
       backup_path "$HOME/.config/nvim" "$stamp"
+      ;;
+    pi)
+      local path
+      for path in "${PI_MANAGED_PATHS[@]}"; do
+        backup_path "$HOME/.pi/agent/$path" "$stamp"
+      done
       ;;
   esac
 }
