@@ -1,0 +1,68 @@
+{
+  "workbench.fontAliasing": "antialiased",
+  "window.titleBarStyle": "custom",
+  "workbench.layoutControl.enabled": false,
+  "workbench.activityBar.location": "top",
+  "workbench.activityBar.compact": true,
+  "workbench.editor.tabSizing": "shrink",
+  "breadcrumbs.enabled": true,
+
+  "catppuccin.accentColor": "blue",
+  "catppuccin.workbenchMode": "flat",
+  "catppuccin.colorOverrides": {
+    "mocha": {
+      "base": "#212121",
+      "mantle": "#252526",
+      "crust": "#252526"
+    }
+  },
+  "catppuccin.customUIColors": {
+    "mocha": {
+      "icon.foreground": "subtext0",
+      "activityBar.foreground": "text",
+      "activityBarTop.foreground": "text",
+      "sideBarTitle.foreground": "text",
+      "breadcrumb.activeSelectionForeground": "text",
+      "breadcrumb.focusForeground": "text",
+      "editorLineNumber.activeForeground": "text",
+      "tab.activeForeground": "text",
+      "tab.hoverForeground": "subtext1",
+      "tab.activeBorderTop": "surface0 0",
+      "tab.unfocusedActiveBorderTop": "surface0 0"
+    }
+  },
+  "catppuccin.boldKeywords": false,
+  "catppuccin.italicComments": false,
+  "catppuccin.italicKeywords": false,
+  "catppuccin.extraBordersEnabled": false,
+
+  "editor.fontFamily": "Iosevka Fixed",
+  "editor.fontSize": 15,
+  "editor.minimap.enabled": false,
+  "editor.stickyScroll.enabled": true,
+  "editor.semanticHighlighting.enabled": true,
+  "editor.rulers": [120],
+  "editor.renderWhitespace": "all",
+  "editor.renderLineHighlight": "line",
+  "editor.cursorSurroundingLines": 15,
+  "terminal.integrated.fontSize": 15,
+  "terminal.integrated.minimumContrastRatio": 1,
+
+  "vim.useSystemClipboard": true,
+  "vim.highlightedyank.enable": true,
+  "vim.ignorecase": true,
+  "vim.smartcase": true,
+  "vim.incsearch": true,
+  "vim.hlsearch": true,
+  "vim.inccommand": "split",
+  "vim.textwidth": 120,
+  "vim.visualstar": true,
+  "vim.camelCaseMotion.enable": true,
+
+  "extensions.experimental.affinity": {
+    "vscodevim.vim": 1
+  },
+  "workbench.secondarySideBar.defaultVisibility": "hidden",
+  "python.languageServer": "Default",
+  "workbench.colorTheme": "Catppuccin Mocha"
+}
