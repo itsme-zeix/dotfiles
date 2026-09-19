@@ -494,11 +494,11 @@ return {
     },
     opts = {
       notify_on_error = false,
-      format_on_save = function(bufnr)
-        local disable_filetypes = { c = true, cpp = true }
-        if disable_filetypes[vim.bo[bufnr].filetype] then return nil end
-        return { timeout_ms = 500, lsp_format = 'fallback' }
-      end,
+      -- format_on_save = function(bufnr)
+      --   local disable_filetypes = { c = true, cpp = true }
+      --   if disable_filetypes[vim.bo[bufnr].filetype] then return nil end
+      --   return { timeout_ms = 500, lsp_format = 'fallback' }
+      -- end,
       formatters_by_ft = {
         lua = { 'stylua' },
         nix = { 'alejandra' },
@@ -638,13 +638,11 @@ return {
       local treesitter = require 'nvim-treesitter'
       local disabled = { markdown = true, markdown_inline = true }
 
-      treesitter.setup { install_dir = vim.fn.stdpath('data') .. '/site' }
+      treesitter.setup { install_dir = vim.fn.stdpath 'data' .. '/site' }
       local function enable_treesitter(buf)
         if disabled[vim.bo[buf].filetype] then return end
         pcall(vim.treesitter.start, buf)
-        if vim.bo[buf].filetype ~= 'ruby' then
-          vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-        end
+        if vim.bo[buf].filetype ~= 'ruby' then vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()" end
       end
 
       vim.api.nvim_create_autocmd('FileType', {

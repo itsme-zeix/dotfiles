@@ -10,6 +10,7 @@
 .*.un~
 
 # Neovim
+.nvimlog
 nvim/.luarc.json
 
 # Private/local overrides
