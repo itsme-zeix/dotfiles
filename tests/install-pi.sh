@@ -26,6 +26,7 @@ diff -u \
     .config/nvim/lazy-lock.json \
     .config/nvim/lua \
     .pi/agent/AGENTS.md \
+    .pi/agent/extensions/btw-autocomplete.ts \
     .pi/agent/extensions/mutation-stats.ts \
     .pi/agent/extensions/project-status.ts \
     .pi/agent/extensions/turn-timer.ts \

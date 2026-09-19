@@ -3,6 +3,7 @@
 The repository linker installs durable Pi configuration into `~/.pi/agent`:
 
 - `AGENTS.md`
+- `extensions/btw-autocomplete.ts`
 - `extensions/project-status.ts`
 - `extensions/mutation-stats.ts`
 - `extensions/turn-timer.ts`
@@ -26,8 +27,7 @@ Install the links from the dotfiles repository root:
 ```
 
 Install the runtime packages with pinned versions and apply the tracked
-`pi-btw` command aliases, static subagent step indicators, and Pi compatibility
-patches:
+static subagent step indicators and Pi compatibility patches:
 
 ```sh
 ./pi/setup.sh
@@ -48,11 +48,13 @@ by `/review`, `/simplify`, `/pattern-scout`, and `/review-and-simplify`. The
 commands own orchestration and edit policy; the skills own reusable leaf-agent
 behavior.
 
-`/btw` is the Claude-style one-shot side question from `pi-mono-btw`.
-`/side` opens a persistent, tool-enabled side thread from `pi-btw`, and
-`/btw-in-thread` is an alias for `/side`. The threaded extension also exposes
-the `/side:new`, `/side:clear`, `/side:inject`, `/side:summarize`,
-`/side:model`, `/side:thinking`, and `/side:tangent` commands.
+`/btw` is the Claude-style one-shot side question from `pi-mono-btw`. It
+intercepts input directly rather than registering a command, which is what keeps
+it usable while the main agent is still running. The tracked `btw-autocomplete`
+extension adds the entry to the slash-command menu without registering a
+command, since a registered `/btw` would take precedence over input expansion and
+shadow the real handler. `Ctrl+Shift+B` asks the current editor text as a side
+question.
 
 The tracked `project-status` extension renders a compact one-line footer with
 the current directory, Git branch and change count, GitHub PR, extension

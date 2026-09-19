@@ -3,8 +3,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PI_AGENT_DIR="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
-BTW_PACKAGE_DIR="$PI_AGENT_DIR/npm/node_modules/pi-btw"
-BTW_PATCH_FILE="$SCRIPT_DIR/patches/pi-btw-side.patch"
 SUBAGENTS_PACKAGE_DIR="$PI_AGENT_DIR/npm/node_modules/pi-subagents"
 SUBAGENTS_PATCH_FILE="$SCRIPT_DIR/patches/pi-subagents-static-steps.patch"
 SUBAGENTS_VERSION="0.48.0"
@@ -51,12 +49,9 @@ fi
 
 pi install npm:pi-subagents@0.48.0
 pi install npm:pi-mono-btw@1.7.4
-pi install npm:pi-sandbox@0.6.1
-pi install npm:pi-btw@0.4.1
 
 assert_package_version pi-subagents "$SUBAGENTS_PACKAGE_DIR" "$SUBAGENTS_VERSION"
 apply_tracked_patch "pi-subagents static step indicators" "$SUBAGENTS_PACKAGE_DIR" "$SUBAGENTS_PATCH_FILE"
-apply_tracked_patch "pi-btw command aliases" "$BTW_PACKAGE_DIR" "$BTW_PATCH_FILE"
 
 assert_package_version Pi "$PI_PACKAGE_DIR" "$PI_VERSION"
 apply_tracked_patch "Pi abort message handling" "$PI_PACKAGE_DIR" "$PI_PATCH_FILE"
