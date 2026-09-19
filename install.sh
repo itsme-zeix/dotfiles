@@ -1,228 +1,171 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOTFILES_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 BACKUP_ROOT="${BACKUP_ROOT:-$HOME/.dotfiles-backup}"
-DEFAULT_PACKAGES=(vim nvim pi)
-PI_MANAGED_PATHS=(
-  AGENTS.md
-  extensions/project-status.ts
-  extensions/mutation-stats.ts
-  extensions/turn-timer.ts
-  extensions/workflow.ts
-  skills/adversarial-review/SKILL.md
-  skills/ketch-research/SKILL.md
-  skills/local-simplifier/SKILL.md
-  skills/pattern-scout/SKILL.md
-  prompts/devils-advocate.md
-  prompts/pattern-scout.md
-  prompts/review.md
-  prompts/review-and-simplify.md
-  prompts/simplify.md
-)
+DEFAULT_PACKAGES=(vim nvim pi agent-skills)
+LINK_SOURCES=()
+LINK_TARGETS=()
 
 usage() {
   cat <<'EOF'
 Usage: ./install.sh <command> [packages...]
 
 Commands:
-  dry-run   Show first-install backups and validate stow plans
-  link      Link packages with stow, failing on conflicts
-  install   Back up existing live config paths, then link packages
-  restow    Re-run stow for already linked packages
-  unstow    Remove symlinks managed by stow
+  dry-run   Preview links and backups without changing files
+  link      Create links and fail when a target conflicts
+  install   Back up conflicting targets, then create links
+  unlink    Remove only links managed by this repository
   help      Show this help
 
 Packages:
-  vim       Links into $HOME
-  nvim      Links into $HOME/.config/nvim
-  pi        Links durable config into $HOME/.pi/agent
+  vim           Vim configuration
+  nvim          Neovim configuration
+  pi            Durable Pi configuration
+  agent-skills  Portable user-level agent skills
 
-Defaults to: vim nvim pi
+Defaults to: vim nvim pi agent-skills
 EOF
 }
 
-require_stow() {
-  if command -v stow >/dev/null 2>&1; then
-    return
-  fi
-
-  cat >&2 <<'EOF'
-GNU Stow is not installed.
-
-Install it with one of:
-  brew install stow
-  sudo apt install stow
-  sudo dnf install stow
-  sudo pacman -S stow
-EOF
-  exit 1
+add_link() {
+  LINK_SOURCES+=("$1")
+  LINK_TARGETS+=("$2")
 }
 
-target_for_package() {
-  case "$1" in
-    vim)
-      printf '%s\n' "$HOME"
-      ;;
-    nvim)
-      printf '%s\n' "$HOME/.config/nvim"
-      ;;
-    pi)
-      printf '%s\n' "$HOME/.pi/agent"
-      ;;
-    *)
-      printf 'Unknown package: %s\n' "$1" >&2
-      exit 2
-      ;;
-  esac
-}
-
-ensure_target_for_package() {
-  case "$1" in
-    vim)
-      ;;
-    nvim)
-      mkdir -p "$HOME/.config/nvim"
-      ;;
-    pi)
-      mkdir -p "$HOME/.pi/agent"
-      ;;
-  esac
-}
-
-run_stow() {
-  local command="$1"
-  local package="$2"
-  local target
-  target="$(target_for_package "$package")"
-
-  local args=(
-    --dir="$DOTFILES_DIR"
-    --target="$target"
-    --no-folding
-  )
-
-  case "$command" in
-    dry-run)
-      args+=(--simulate --verbose=2)
-      ;;
-    link)
-      ;;
-    restow)
-      args+=(--restow)
-      ;;
-    unstow)
-      args+=(--delete)
-      ;;
-    *)
-      printf 'Unknown stow command: %s\n' "$command" >&2
-      exit 2
-      ;;
-  esac
-
-  stow "${args[@]}" "$package"
-}
-
-run_stow_plan() {
+register_package() {
   local package="$1"
-  local target
-  target="$(target_for_package "$package")"
-
-  local tmp_target
-  local output
-  tmp_target="$(mktemp -d)"
-
-  if ! output="$(
-    stow \
-      --dir="$DOTFILES_DIR" \
-      --target="$tmp_target" \
-      --simulate \
-      --no-folding \
-      "$package" 2>&1
-  )"; then
-    printf '%s\n' "$output" >&2
-    rm -rf "$tmp_target"
-    return 1
-  fi
-
-  rm -rf "$tmp_target"
-  printf 'Stow plan OK: %s -> %s\n' "$package" "$target"
-}
-
-show_backup_path() {
-  local path="$1"
-
-  if [[ -e "$path" || -L "$path" ]]; then
-    printf 'Would back up: %s\n' "$path"
-  else
-    printf 'No existing path: %s\n' "$path"
-  fi
-}
-
-show_backup_plan() {
-  local package="$1"
+  local source
 
   case "$package" in
     vim)
-      show_backup_path "$HOME/.vimrc"
-      show_backup_path "$HOME/.vim"
+      add_link "$DOTFILES_DIR/vim/.vimrc" "$HOME/.vimrc"
+      add_link "$DOTFILES_DIR/vim/.vim" "$HOME/.vim"
       ;;
     nvim)
-      show_backup_path "$HOME/.config/nvim"
+      add_link "$DOTFILES_DIR/nvim/.stylua.toml" "$HOME/.config/nvim/.stylua.toml"
+      add_link "$DOTFILES_DIR/nvim/init.lua" "$HOME/.config/nvim/init.lua"
+      add_link "$DOTFILES_DIR/nvim/lazy-lock.json" "$HOME/.config/nvim/lazy-lock.json"
+      add_link "$DOTFILES_DIR/nvim/lua" "$HOME/.config/nvim/lua"
       ;;
     pi)
-      local path
-      for path in "${PI_MANAGED_PATHS[@]}"; do
-        show_backup_path "$HOME/.pi/agent/$path"
+      add_link "$DOTFILES_DIR/pi/AGENTS.md" "$HOME/.pi/agent/AGENTS.md"
+      for source in "$DOTFILES_DIR"/pi/extensions/*.ts; do
+        [[ -e "$source" ]] || continue
+        add_link "$source" "$HOME/.pi/agent/extensions/$(basename "$source")"
+      done
+      for source in "$DOTFILES_DIR"/pi/prompts/*.md; do
+        [[ -e "$source" ]] || continue
+        add_link "$source" "$HOME/.pi/agent/prompts/$(basename "$source")"
+      done
+      for source in "$DOTFILES_DIR"/pi/skills/*/SKILL.md; do
+        [[ -e "$source" ]] || continue
+        add_link "$source" "$HOME/.pi/agent/skills/$(basename "$(dirname "$source")")/SKILL.md"
       done
       ;;
+    agent-skills)
+      for source in "$DOTFILES_DIR"/agent-skills/*; do
+        [[ -d "$source" ]] || continue
+        add_link "$source" "$HOME/.agents/skills/$(basename "$source")"
+      done
+      ;;
+    *)
+      printf 'Unknown package: %s\n' "$package" >&2
+      exit 2
+      ;;
   esac
+}
+
+canonical_path() {
+  local path="$1"
+  local parent
+  parent="$(cd -P -- "$(dirname -- "$path")" 2>/dev/null && pwd)" || return 1
+  printf '%s/%s\n' "$parent" "$(basename -- "$path")"
+}
+
+link_destination() {
+  local target="$1"
+  local destination
+  destination="$(readlink "$target")"
+  if [[ "$destination" != /* ]]; then
+    destination="$(dirname -- "$target")/$destination"
+  fi
+  canonical_path "$destination"
+}
+
+is_managed_link() {
+  local source="$1"
+  local target="$2"
+  local actual
+  local expected
+  [[ -L "$target" ]] || return 1
+  actual="$(link_destination "$target")" || return 1
+  expected="$(canonical_path "$source")" || return 1
+  [[ "$actual" == "$expected" ]]
 }
 
 backup_path() {
-  local path="$1"
+  local target="$1"
   local stamp="$2"
+  local relative="${target#"$HOME"/}"
+  local destination="$BACKUP_ROOT/$stamp/$relative"
 
-  if [[ ! -e "$path" && ! -L "$path" ]]; then
+  mkdir -p -- "$(dirname -- "$destination")"
+  mv -- "$target" "$destination"
+  printf 'Backed up %s -> %s\n' "$target" "$destination"
+}
+
+create_link() {
+  local source="$1"
+  local target="$2"
+  local command="$3"
+  local stamp="$4"
+
+  if [[ ! -e "$source" ]]; then
+    printf 'Missing source: %s\n' "$source" >&2
+    return 1
+  fi
+
+  if is_managed_link "$source" "$target"; then
+    printf 'Already linked: %s\n' "$target"
     return
   fi
 
-  local rel="${path#$HOME/}"
-  local dest="$BACKUP_ROOT/$stamp/$rel"
-  mkdir -p "$(dirname "$dest")"
-  mv "$path" "$dest"
-  printf 'Backed up %s -> %s\n' "$path" "$dest"
+  if [[ -e "$target" || -L "$target" ]]; then
+    case "$command" in
+      dry-run)
+        printf 'Would back up: %s\n' "$target"
+        ;;
+      install)
+        backup_path "$target" "$stamp"
+        ;;
+      link)
+        printf 'Conflict: %s already exists\n' "$target" >&2
+        return 1
+        ;;
+    esac
+  fi
+
+  if [[ "$command" == "dry-run" ]]; then
+    printf 'Would link: %s -> %s\n' "$target" "$source"
+    return
+  fi
+
+  mkdir -p -- "$(dirname -- "$target")"
+  ln -s -- "$source" "$target"
+  printf 'Linked %s -> %s\n' "$target" "$source"
 }
 
-backup_package() {
-  local package="$1"
-  local stamp="$2"
+remove_link() {
+  local source="$1"
+  local target="$2"
 
-  case "$package" in
-    vim)
-      backup_path "$HOME/.vimrc" "$stamp"
-      backup_path "$HOME/.vim" "$stamp"
-      ;;
-    nvim)
-      backup_path "$HOME/.config/nvim" "$stamp"
-      ;;
-    pi)
-      local path
-      for path in "${PI_MANAGED_PATHS[@]}"; do
-        backup_path "$HOME/.pi/agent/$path" "$stamp"
-      done
-      ;;
-  esac
-}
-
-install_package() {
-  local package="$1"
-  local stamp="$2"
-
-  run_stow unstow "$package" >/dev/null 2>&1 || true
-  backup_package "$package" "$stamp"
-  ensure_target_for_package "$package"
-  run_stow link "$package"
+  if is_managed_link "$source" "$target"; then
+    unlink -- "$target"
+    printf 'Unlinked %s\n' "$target"
+  elif [[ -e "$target" || -L "$target" ]]; then
+    printf 'Left unmanaged target: %s\n' "$target"
+  fi
 }
 
 main() {
@@ -231,44 +174,37 @@ main() {
     usage
     return
   fi
-  shift || true
-
-  local packages=("$@")
-  if [[ "${#packages[@]}" -eq 0 ]]; then
-    packages=("${DEFAULT_PACKAGES[@]}")
-  fi
-
-  require_stow
-  cd "$DOTFILES_DIR"
 
   case "$command" in
-    dry-run)
-      local package
-      for package in "${packages[@]}"; do
-        show_backup_plan "$package"
-        run_stow_plan "$package"
-      done
-      ;;
-    link|restow|unstow)
-      local package
-      for package in "${packages[@]}"; do
-        ensure_target_for_package "$package"
-        run_stow "$command" "$package"
-      done
-      ;;
-    install)
-      local stamp
-      stamp="$(date +%Y%m%d-%H%M%S)"
-      local package
-      for package in "${packages[@]}"; do
-        install_package "$package" "$stamp"
-      done
+    dry-run|link|install|unlink)
       ;;
     *)
       usage >&2
       exit 2
       ;;
   esac
+  shift
+
+  local packages=("$@")
+  if [[ "${#packages[@]}" -eq 0 ]]; then
+    packages=("${DEFAULT_PACKAGES[@]}")
+  fi
+
+  local package
+  for package in "${packages[@]}"; do
+    register_package "$package"
+  done
+
+  local stamp
+  stamp="$(date +%Y%m%d-%H%M%S)-$$"
+  local index
+  for ((index = 0; index < ${#LINK_SOURCES[@]}; index++)); do
+    if [[ "$command" == "unlink" ]]; then
+      remove_link "${LINK_SOURCES[$index]}" "${LINK_TARGETS[$index]}"
+    else
+      create_link "${LINK_SOURCES[$index]}" "${LINK_TARGETS[$index]}" "$command" "$stamp"
+    fi
+  done
 }
 
 main "$@"

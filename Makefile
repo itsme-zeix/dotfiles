@@ -1,19 +1,17 @@
-.PHONY: dry-run stow install restow unstow test
+.PHONY: dry-run link install unlink test
 
 dry-run:
 	./install.sh dry-run
 
-stow:
+link:
 	./install.sh link
 
 install:
 	./install.sh install
 
-restow:
-	./install.sh restow
-
-unstow:
-	./install.sh unstow
+unlink:
+	./install.sh unlink
 
 test:
 	./tests/install-pi.sh
+	./tests/check-working-frames.sh

@@ -1,0 +1,282 @@
+diff --git a/src/extension/index.ts b/src/extension/index.ts
+--- a/src/extension/index.ts
++++ b/src/extension/index.ts
+@@ -22,6 +22,7 @@
+ import { discoverAgents } from "../agents/agents.ts";
+ import { ensureAccessibleDir } from "../shared/accessible-dir.ts";
+ import { cleanupAllArtifactDirs, cleanupOldArtifacts, getArtifactsDir } from "../shared/artifacts.ts";
++import { COMPLETE_GLYPH, FAILED_GLYPH, PAUSED_GLYPH } from "../shared/status-format.ts";
+ import { resolveCurrentSessionId } from "../shared/session-identity.ts";
+ import { cleanupOldChainDirs } from "../shared/settings.ts";
+ import { clearLegacyResultAnimationTimer, renderSubagentResult, renderSubagentSummary } from "../tui/render.ts";
+@@ -499,10 +500,10 @@
+ 		const details = (message.details as SubagentNotifyDetails | undefined) ?? parseSubagentNotifyContent(content);
+ 		if (!details) return new Text(content, 0, 0);
+ 		const icon = details.status === "completed"
+-			? theme.fg("success", "✓")
++			? theme.fg("success", COMPLETE_GLYPH)
+ 			: details.status === "paused"
+-				? theme.fg("warning", "■")
+-				: theme.fg("error", "✗");
++				? theme.fg("warning", PAUSED_GLYPH)
++				: theme.fg("error", FAILED_GLYPH);
+ 		const parts: string[] = [];
+ 		if (details.taskInfo) parts.push(details.taskInfo);
+ 		if (details.durationMs !== undefined) parts.push(formatDuration(details.durationMs));
+diff --git a/src/shared/status-format.ts b/src/shared/status-format.ts
+--- a/src/shared/status-format.ts
++++ b/src/shared/status-format.ts
+@@ -1,5 +1,17 @@
+ import type { ActivityState, AsyncJobStep } from "./types.ts";
+ 
++/**
++ * Shared status glyph vocabulary for subagent rows, fleet views, transcripts,
++ * and notifications. Animated indicators (job spinners, aggregate headers) use
++ * RUNNING_FRAMES in ../tui/render.ts; these glyphs are for static status rows so
++ * the same state never renders with two different glyphs.
++ */
++export const RUNNING_GLYPH = "□";
++export const QUEUED_GLYPH = "□";
++export const COMPLETE_GLYPH = "✔";
++export const FAILED_GLYPH = "✗";
++export const PAUSED_GLYPH = "■";
++
+ type StepStatusLike = Pick<AsyncJobStep, "status">;
+ 
+ function formatActivityAge(ms: number): string {
+diff --git a/src/tui/fleet-status.ts b/src/tui/fleet-status.ts
+--- a/src/tui/fleet-status.ts
++++ b/src/tui/fleet-status.ts
+@@ -1,6 +1,7 @@
+ import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+ import { type EditorComponent, isKeyRelease, Key, matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+ import { formatModelThinking } from "../shared/formatters.ts";
++import { COMPLETE_GLYPH, FAILED_GLYPH, PAUSED_GLYPH, QUEUED_GLYPH, RUNNING_GLYPH } from "../shared/status-format.ts";
+ import type { AsyncJobStep, FleetViewPlacement, NestedRunSummary, NestedStepSummary, SubagentState } from "../shared/types.ts";
+ import { formatWorkflowJsonPreview } from "../workflows/scripted-workflow.ts";
+ 
+@@ -87,11 +88,11 @@
+ }
+ 
+ function nestedStatusGlyph(state: FleetNestedRow["state"], theme: Theme): string {
+-	if (state === "running") return theme.fg("accent", "●");
+-	if (state === "queued" || state === "pending") return theme.fg("muted", "◦");
+-	if (state === "complete" || state === "completed") return theme.fg("success", "✓");
+-	if (state === "failed" || state === "rejected") return theme.fg("error", "✗");
+-	return theme.fg("warning", "■");
++	if (state === "running") return theme.fg("accent", RUNNING_GLYPH);
++	if (state === "queued" || state === "pending") return theme.fg("muted", QUEUED_GLYPH);
++	if (state === "complete" || state === "completed") return theme.fg("success", COMPLETE_GLYPH);
++	if (state === "failed" || state === "rejected") return theme.fg("error", FAILED_GLYPH);
++	return theme.fg("warning", PAUSED_GLYPH);
+ }
+ 
+ function nestedFleetRows(children: NestedRunSummary[] | undefined): FleetNestedRow[] {
+diff --git a/src/tui/fleet-transcript.ts b/src/tui/fleet-transcript.ts
+--- a/src/tui/fleet-transcript.ts
++++ b/src/tui/fleet-transcript.ts
+@@ -2,6 +2,7 @@
+ import * as path from "node:path";
+ import { getLanguageFromPath, highlightCode, type ExtensionContext } from "@earendil-works/pi-coding-agent";
+ import { Markdown, truncateToWidth, visibleWidth, wrapTextWithAnsi, type MarkdownTheme } from "@earendil-works/pi-tui";
++import { COMPLETE_GLYPH, FAILED_GLYPH, RUNNING_GLYPH } from "../shared/status-format.ts";
+ 
+ const DEFAULT_MAX_RECORDS = 240;
+ const DEFAULT_MAX_BYTES = 2 * 1024 * 1024;
+@@ -404,9 +405,9 @@
+ }
+ 
+ function statusGlyph(event: Extract<FleetTranscriptEvent, { kind: "tool" }>, theme: Theme): string {
+-	if (event.status === "running") return theme.fg("warning", "●");
+-	if (event.status === "error") return theme.fg("error", "✗");
+-	return theme.fg("success", "✓");
++	if (event.status === "running") return theme.fg("warning", RUNNING_GLYPH);
++	if (event.status === "error") return theme.fg("error", FAILED_GLYPH);
++	return theme.fg("success", COMPLETE_GLYPH);
+ }
+ 
+ function jsonScalar(value: unknown): string | undefined {
+diff --git a/src/tui/fleet.ts b/src/tui/fleet.ts
+--- a/src/tui/fleet.ts
++++ b/src/tui/fleet.ts
+@@ -5,6 +5,7 @@
+ import { matchesKey, truncateToWidth, visibleWidth, wrapTextWithAnsi, type Component, type MarkdownTheme } from "@earendil-works/pi-tui";
+ import { getArtifactPaths, getArtifactsDir } from "../shared/artifacts.ts";
+ import { formatDuration, formatModelThinking, formatTokens, shortenPath } from "../shared/formatters.ts";
++import { COMPLETE_GLYPH, FAILED_GLYPH, PAUSED_GLYPH, QUEUED_GLYPH, RUNNING_GLYPH } from "../shared/status-format.ts";
+ import { DIRS, type AsyncJobState, type Details, type FleetKeybindingAction, type FleetKeybindingsConfig, type ForegroundChildControl, type ForegroundResumeChild, type ForegroundResumeRun, type ForegroundRunControl, type SubagentState } from "../shared/types.ts";
+ import { decodeUtf8Tail } from "../shared/utf8.ts";
+ import { readStatus } from "../shared/utils.ts";
+@@ -277,11 +278,11 @@
+ }
+ 
+ function statusGlyph(item: FleetItem, theme: Theme): string {
+-	if (item.state === "running") return theme.fg("accent", "●");
+-	if (item.state === "queued" || item.state === "pending") return theme.fg("muted", "◦");
+-	if (item.state === "complete" || item.state === "completed") return theme.fg("success", "✓");
+-	if (item.state === "paused" || item.state === "stopped" || item.state === "detached") return theme.fg("warning", "■");
+-	return theme.fg("error", "✗");
++	if (item.state === "running") return theme.fg("accent", RUNNING_GLYPH);
++	if (item.state === "queued" || item.state === "pending") return theme.fg("muted", QUEUED_GLYPH);
++	if (item.state === "complete" || item.state === "completed") return theme.fg("success", COMPLETE_GLYPH);
++	if (item.state === "paused" || item.state === "stopped" || item.state === "detached") return theme.fg("warning", PAUSED_GLYPH);
++	return theme.fg("error", FAILED_GLYPH);
+ }
+ 
+ function foregroundPromptAuditCount(item: Extract<FleetItem, { kind: "foreground-active" }>, state: SubagentState): number {
+diff --git a/src/tui/render.ts b/src/tui/render.ts
+--- a/src/tui/render.ts
++++ b/src/tui/render.ts
+@@ -24,7 +24,7 @@
+ import { getDisplayItems, getSingleResultOutput } from "../shared/utils.ts";
+ import { flatToLogicalStepIndex } from "../runs/background/parallel-groups.ts";
+ import { formatNestedAggregate } from "../runs/shared/nested-render.ts";
+-import { aggregateStepStatus, formatActivityLabel, formatAgentRunningLabel, formatParallelOutcome } from "../shared/status-format.ts";
++import { aggregateStepStatus, COMPLETE_GLYPH, FAILED_GLYPH, formatActivityLabel, formatAgentRunningLabel, formatParallelOutcome, PAUSED_GLYPH, QUEUED_GLYPH, RUNNING_GLYPH } from "../shared/status-format.ts";
+ import { contextModeBadge, contextModePrefix } from "../runs/shared/context-mode.ts";
+ import { buildWorkflowChatProgressRows, type WorkflowChatProgressRow } from "../workflows/chat-progress.ts";
+ 
+@@ -129,7 +129,8 @@
+ 	return lines;
+ }
+ 
+-const RUNNING_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
++// Match the parent Working indicator while keeping child state rows static.
++const RUNNING_FRAMES = ["⠖", "⠲", "⢲", "⢰", "⣰", "⣠", "⣄", "⣆", "⡆", "⡖"];
+ const STATIC_RUNNING_GLYPH = "●";
+ 
+ type ProgressSeedSource = Partial<Pick<AgentProgress, "index" | "toolCount" | "tokens" | "durationMs" | "lastActivityAt" | "currentToolStartedAt" | "turnCount">>;
+@@ -420,14 +421,13 @@
+ 	frame?: number;
+ }): ResultPresentation {
+ 	if (input.running) {
+-		const glyph = input.frame !== undefined ? runningGlyph((input.seed ?? 0) + input.frame) : runningGlyph(input.seed);
+-		return { glyph, label: "running", tone: "accent" };
++		return { glyph: RUNNING_GLYPH, label: "running", tone: "accent" };
+ 	}
+-	if (input.detached) return { glyph: "■", label: "detached", tone: "warning" };
+-	if (input.stopped) return { glyph: "■", label: "stopped", tone: "warning" };
+-	if (input.interrupted) return { glyph: "■", label: "paused", tone: "warning" };
+-	if (input.failed) return { glyph: "✗", label: "failed", tone: "error" };
+-	return { glyph: "✓", label: "completed", tone: input.completedWithoutOutput ? "warning" : "success" };
++	if (input.detached) return { glyph: PAUSED_GLYPH, label: "detached", tone: "warning" };
++	if (input.stopped) return { glyph: PAUSED_GLYPH, label: "stopped", tone: "warning" };
++	if (input.interrupted) return { glyph: PAUSED_GLYPH, label: "paused", tone: "warning" };
++	if (input.failed) return { glyph: FAILED_GLYPH, label: "failed", tone: "error" };
++	return { glyph: COMPLETE_GLYPH, label: "completed", tone: input.completedWithoutOutput ? "warning" : "success" };
+ }
+ 
+ function hasTerminalResultFlag(result: Details["results"][number]): boolean {
+@@ -588,20 +588,20 @@
+ 
+ function widgetStatusGlyph(job: AsyncJobState, theme: Theme, frame?: number): string {
+ 	if (job.status === "running") return theme.fg("accent", runningGlyph(animatedSeed(widgetJobRunningSeed(job), frame)));
+-	if (job.status === "queued") return theme.fg("muted", "◦");
+-	if (job.status === "complete") return theme.fg("success", "✓");
+-	if (job.status === "paused") return theme.fg("warning", "■");
+-	if (job.status === "stopped") return theme.fg("warning", "■");
+-	return theme.fg("error", "✗");
++	if (job.status === "queued") return theme.fg("muted", QUEUED_GLYPH);
++	if (job.status === "complete") return theme.fg("success", COMPLETE_GLYPH);
++	if (job.status === "paused") return theme.fg("warning", PAUSED_GLYPH);
++	if (job.status === "stopped") return theme.fg("warning", PAUSED_GLYPH);
++	return theme.fg("error", FAILED_GLYPH);
+ }
+ 
+-function widgetStepGlyph(status: AsyncJobStep["status"], theme: Theme, seed?: number, frame?: number): string {
+-	if (status === "running") return theme.fg("accent", runningGlyph(animatedSeed(seed, frame)));
+-	if (status === "complete" || status === "completed") return theme.fg("success", "✓");
+-	if (status === "failed") return theme.fg("error", "✗");
+-	if (status === "paused") return theme.fg("warning", "■");
+-	if (status === "stopped") return theme.fg("warning", "■");
+-	return theme.fg("muted", "◦");
++function widgetStepGlyph(status: AsyncJobStep["status"], theme: Theme, _seed?: number, _frame?: number): string {
++	if (status === "running") return theme.fg("accent", RUNNING_GLYPH);
++	if (status === "complete" || status === "completed") return theme.fg("success", COMPLETE_GLYPH);
++	if (status === "failed") return theme.fg("error", FAILED_GLYPH);
++	if (status === "paused") return theme.fg("warning", PAUSED_GLYPH);
++	if (status === "stopped") return theme.fg("warning", PAUSED_GLYPH);
++	return theme.fg("muted", QUEUED_GLYPH);
+ }
+ 
+ function widgetStepStatus(status: AsyncJobStep["status"], theme: Theme): string {
+@@ -977,13 +977,13 @@
+ 	return run.id;
+ }
+ 
+-function nestedStatusGlyph(state: NestedRunSummary["state"] | NestedStepSummary["status"], theme: Theme, seed?: number): string {
+-	if (state === "running") return theme.fg("accent", runningGlyph(seed));
+-	if (state === "complete" || state === "completed") return theme.fg("success", "✓");
+-	if (state === "failed") return theme.fg("error", "✗");
+-	if (state === "paused") return theme.fg("warning", "■");
+-	if (state === "stopped") return theme.fg("warning", "■");
+-	return theme.fg("muted", "◦");
++function nestedStatusGlyph(state: NestedRunSummary["state"] | NestedStepSummary["status"], theme: Theme, _seed?: number): string {
++	if (state === "running") return theme.fg("accent", RUNNING_GLYPH);
++	if (state === "complete" || state === "completed") return theme.fg("success", COMPLETE_GLYPH);
++	if (state === "failed") return theme.fg("error", FAILED_GLYPH);
++	if (state === "paused") return theme.fg("warning", PAUSED_GLYPH);
++	if (state === "stopped") return theme.fg("warning", PAUSED_GLYPH);
++	return theme.fg("muted", QUEUED_GLYPH);
+ }
+ 
+ function nestedRunSeed(run: NestedRunSummary): number | undefined {
+@@ -1502,7 +1502,7 @@
+ 	}
+ 
+ 	if (queued.length > 0 && slots > 0) {
+-		items.push([`${theme.fg("muted", "◦")} ${theme.fg("dim", `${queued.length} queued`)}`]);
++		items.push([`${theme.fg("muted", QUEUED_GLYPH)} ${theme.fg("dim", `${queued.length} queued`)}`]);
+ 		queuedSummaryShown = true;
+ 		slots--;
+ 	}
+@@ -1597,10 +1597,10 @@
+ 	return c;
+ }
+ 
+-function workflowRowGlyph(row: WorkflowChatProgressRow, theme: Theme, frame?: number): string {
+-	if (row.state === "running") return theme.fg("accent", runningGlyph(frame));
+-	if (row.state === "complete") return theme.fg("success", "✓");
+-	return theme.fg("error", "✗");
++function workflowRowGlyph(row: WorkflowChatProgressRow, theme: Theme, _frame?: number): string {
++	if (row.state === "running") return theme.fg("accent", RUNNING_GLYPH);
++	if (row.state === "complete") return theme.fg("success", COMPLETE_GLYPH);
++	return theme.fg("error", FAILED_GLYPH);
+ }
+ 
+ function workflowRowStateLabel(row: WorkflowChatProgressRow, theme: Theme): string {
+@@ -1620,7 +1620,7 @@
+ 	const workflow = d.workflow;
+ 	const rows = workflow ? buildWorkflowChatProgressRows(workflow.trace) : [];
+ 	const state = workflowOverallState(rows, workflow?.value !== undefined, result.isError);
+-	const glyph = state === "running" ? theme.fg("accent", runningGlyph(frame)) : state === "complete" ? theme.fg("success", "✓") : theme.fg("error", "✗");
++	const glyph = state === "running" ? theme.fg("accent", runningGlyph(frame)) : state === "complete" ? theme.fg("success", COMPLETE_GLYPH) : theme.fg("error", FAILED_GLYPH);
+ 	const width = getTermWidth() - 4;
+ 	const runId = d.runId ? d.runId.slice(0, 12) : "workflow";
+ 	const repoLabel = d.chatProgress?.repoLabel ?? (d.chatProgress?.repoRelation === "same" ? "same repo" : "other repo");
+@@ -1724,7 +1724,7 @@
+ 		const rPending = rProg && "status" in rProg && rProg.status === "pending";
+ 		const stepNumber = r.progress?.index !== undefined ? r.progress.index + 1 : progressFromArray?.index !== undefined ? progressFromArray.index + 1 : i + 1;
+ 		const stepStats = formatProgressStats(theme, rProg);
+-		const glyph = rPending ? theme.fg("dim", "◦") : resultGlyph(r, output, theme, rRunning, progressRunningSeed(rProg), frame);
++		const glyph = rPending ? theme.fg("dim", QUEUED_GLYPH) : resultGlyph(r, output, theme, rRunning, progressRunningSeed(rProg), frame);
+ 		const pendingLabel = rPending ? ` ${theme.fg("dim", "· pending")}` : "";
+ 		const stepLabel = entry.rowLabel ?? resultRowLabel(multiLabel, i, stepNumber);
+ 		const rowProgressModel = rProg && "status" in rProg ? rProg : undefined;
+@@ -1778,12 +1778,12 @@
+ 		|| Boolean(details && workflowGraphHasStatus(details, ["failed"]));
+ 	const state = running ? "running" : failed ? "failed" : stopped ? "stopped" : paused ? "paused" : "completed";
+ 	const glyph = state === "running"
+-		? theme.fg("accent", STATIC_RUNNING_GLYPH)
++		? theme.fg("accent", RUNNING_GLYPH)
+ 		: state === "completed"
+-			? theme.fg("success", "✓")
++			? theme.fg("success", COMPLETE_GLYPH)
+ 			: state === "failed"
+-				? theme.fg("error", "✗")
+-				: theme.fg("warning", "■");
++				? theme.fg("error", FAILED_GLYPH)
++				: theme.fg("warning", PAUSED_GLYPH);
+ 	const label = details?.mode === "single" && results.length === 1
+ 		? results[0]?.agent || "subagent"
+ 		: details?.mode || "subagent";

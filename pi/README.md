@@ -1,6 +1,6 @@
 # Pi configuration
 
-This Stow package links durable Pi configuration into `~/.pi/agent`:
+The repository linker installs durable Pi configuration into `~/.pi/agent`:
 
 - `AGENTS.md`
 - `extensions/project-status.ts`
@@ -25,16 +25,16 @@ Install the links from the dotfiles repository root:
 ./install.sh install pi
 ```
 
-Install the runtime extensions with pinned versions and apply the tracked
+Install the runtime packages with pinned versions and apply the tracked
 `pi-btw` command aliases, static subagent step indicators, and Pi compatibility
 patches:
 
 ```sh
-./pi-bootstrap/setup-packages.sh
+./pi/setup.sh
 ```
 
-Bootstrap tooling and compatibility patches live outside the Stow payload under
-`pi-bootstrap/`, so they are not linked into `~/.pi/agent`.
+`setup.sh` and `patches/` stay in the repository. The explicit link installer
+does not place them under `~/.pi/agent`.
 
 The setup script also installs Ketch through Homebrew when missing. On a new
 Ketch installation it selects the zero-key DuckDuckGo backend; existing Ketch

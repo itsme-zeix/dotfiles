@@ -1,6 +1,7 @@
 # Dotfiles
 
-GNU Stow manages Vim, Neovim, and durable Pi agent configuration.
+`install.sh` links Vim, Neovim, durable Pi configuration, and portable agent
+skills from this repository.
 
 Managed paths:
 
@@ -11,31 +12,30 @@ Managed paths:
 - `~/.pi/agent/extensions/`
 - `~/.pi/agent/prompts/`
 - `~/.pi/agent/skills/`
+- `~/.agents/skills/`
 
-Install Stow:
-
-```sh
-brew install stow
-```
-
-On Linux, use your package manager, for example `sudo apt install stow`.
-
-Preview what would happen:
+Preview the links and any required backups:
 
 ```sh
 make dry-run
 ```
 
-Back up existing live Vim, Neovim, and Pi paths and create the links:
+Back up conflicting targets and create the links:
 
 ```sh
 make install
 ```
 
-Remove Stow-managed links:
+Create links only when no target conflicts:
 
 ```sh
-make unstow
+make link
+```
+
+Remove only links that point into this repository:
+
+```sh
+make unlink
 ```
 
 Backups from `make install` go under `~/.dotfiles-backup/`. Pi authentication, sessions, settings, caches, and installed packages remain unmanaged.
