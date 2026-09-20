@@ -26,8 +26,15 @@ Install the links from the dotfiles repository root:
 ./install.sh install pi
 ```
 
-Install the runtime packages with pinned versions and apply the tracked
-static subagent step indicators and Pi compatibility patches:
+`pi/setup.sh` does not install Pi. It requires the pinned version already
+present:
+
+```sh
+npm install -g --ignore-scripts @earendil-works/pi-coding-agent@0.85.1
+```
+
+It then installs the runtime packages with pinned versions and applies the
+tracked static subagent step indicators and Pi compatibility patches:
 
 ```sh
 ./pi/setup.sh

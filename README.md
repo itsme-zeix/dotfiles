@@ -3,7 +3,21 @@
 `install.sh` links Vim, Neovim, durable Pi configuration, and portable agent
 skills from this repository.
 
-Managed paths:
+## New machine setup
+
+Requires `git`, `make`, `patch`, and Node.js with npm. Pi is not installed by
+this repository, so install the version the patches expect first:
+
+```sh
+npm install -g --ignore-scripts @earendil-works/pi-coding-agent@0.85.1
+make install     # link configuration into $HOME
+./pi/setup.sh    # install pinned Pi packages and apply compatibility patches
+```
+
+Then run `pi` and `/login`. Credentials, settings, sessions, and installed
+packages stay machine-local.
+
+## Managed paths
 
 - `~/.vimrc`
 - `~/.vim/`
@@ -13,6 +27,8 @@ Managed paths:
 - `~/.pi/agent/prompts/`
 - `~/.pi/agent/skills/`
 - `~/.agents/skills/`
+
+## Commands
 
 Preview the links and any required backups:
 

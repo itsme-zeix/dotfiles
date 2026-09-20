@@ -39,12 +39,20 @@ apply_tracked_patch() {
 }
 
 if ! command -v ketch >/dev/null 2>&1; then
-	brew install 1broseidon/tap/ketch
+	if command -v brew >/dev/null 2>&1; then
+		brew install ketch
+	elif command -v npm >/dev/null 2>&1; then
+		npm install -g ketch-cli
+	fi
 fi
 
-ketch_config_path="$(ketch config path)"
-if [[ ! -f "$ketch_config_path" ]]; then
-	ketch config set backend ddg
+if command -v ketch >/dev/null 2>&1; then
+	ketch_config_path="$(ketch config path)"
+	if [[ ! -f "$ketch_config_path" ]]; then
+		ketch config set backend ddg
+	fi
+else
+	printf 'ketch not found; skipping research CLI setup\n' >&2
 fi
 
 pi install npm:pi-subagents@0.48.0
