@@ -1,47 +1,28 @@
-# Pi configuration
+# Pi setup
 
-The repository linker installs durable Pi configuration into `~/.pi/agent`:
+Run `./llm/pi/install.sh` from the repository root. It installs the pinned Pi
+version if absent and refuses to patch a different version. It also installs
+pinned Pi packages, applies the tracked patches, and links these files into
+`~/.pi/agent`:
 
-- `AGENTS.md`
+- `AGENTS.md` (from `llm/shared/AGENTS.md`)
 - `extensions/btw-autocomplete.ts`
 - `extensions/project-status.ts`
 - `extensions/mutation-stats.ts`
 - `extensions/turn-timer.ts`
 - `extensions/workflow.ts`
-- `skills/adversarial-review/SKILL.md`
-- `skills/ketch-research/SKILL.md`
-- `skills/local-simplifier/SKILL.md`
-- `skills/pattern-scout/SKILL.md`
-- `prompts/devils-advocate.md`
-- `prompts/pattern-scout.md`
-- `prompts/review.md`
-- `prompts/review-and-simplify.md`
-- `prompts/simplify.md`
+- `skills/<name>/` (from `llm/shared/skills/`)
 
-Runtime state remains local and untracked, including authentication, sessions, settings, caches, and installed packages.
+The installer checks all link targets before changing them, replaces only links
+from the previous Pi layout, and stops on unrelated files. It does not manage
+Claude, Codex, or other dotfiles. The former prompt commands are now available
+as `/skill:review`,
+`/skill:review-and-simplify`, `/skill:simplify`, `/skill:pattern-scout`, and
+`/skill:devils-advocate`.
 
-Install the links from the dotfiles repository root:
-
-```sh
-./install.sh install pi
-```
-
-`pi/setup.sh` does not install Pi. It requires the pinned version already
-present:
-
-```sh
-npm install -g --ignore-scripts @earendil-works/pi-coding-agent@0.85.1
-```
-
-It then installs the runtime packages with pinned versions and applies the
-tracked static subagent step indicators and Pi compatibility patches:
-
-```sh
-./pi/setup.sh
-```
-
-`setup.sh` and `patches/` stay in the repository. The explicit link installer
-does not place them under `~/.pi/agent`.
+Runtime state remains local and untracked, including authentication, sessions,
+settings, caches, and installed packages. `install.sh` and `patches/` stay in
+the repository rather than being linked into `~/.pi/agent`.
 
 The setup script also installs Ketch through Homebrew when missing. On a new
 Ketch installation it selects the zero-key DuckDuckGo backend; existing Ketch
@@ -49,11 +30,9 @@ configuration is left unchanged. `/skill:ketch-research` loads the tracked,
 CLI-only research workflow. Ketch configuration, credentials, and cache remain
 machine-local.
 
-The `adversarial-review`, `local-simplifier`, and `pattern-scout` skills are
-hidden from normal model invocation and assigned explicitly to fresh subagents
-by `/review`, `/simplify`, `/pattern-scout`, and `/review-and-simplify`. The
-commands own orchestration and edit policy; the skills own reusable leaf-agent
-behavior.
+The five review and research workflows are self-contained skills. Review,
+simplification, and pattern scouting delegate read-only analysis to subagents;
+the parent validates their recommendations and makes any authorized edits.
 
 `/btw` is the Claude-style one-shot side question from `pi-mono-btw`. It
 intercepts input directly rather than registering a command, which is what keeps

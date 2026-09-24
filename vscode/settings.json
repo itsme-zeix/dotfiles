@@ -47,6 +47,12 @@
   "editor.cursorSurroundingLines": 15,
   "terminal.integrated.fontSize": 15,
   "terminal.integrated.minimumContrastRatio": 1,
+  "terminal.integrated.commandsToSkipShell": [
+    "-workbench.action.terminal.copySelection",
+    "-workbench.action.terminal.paste",
+    "-workbench.action.terminal.focusFind",
+    "-workbench.action.toggleSidebarVisibility"
+  ],
 
   "vim.useSystemClipboard": true,
   "vim.highlightedyank.enable": true,

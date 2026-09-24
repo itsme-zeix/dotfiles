@@ -1,0 +1,9 @@
+model = "gpt-6-sol"
+model_reasoning_effort = "high"
+tool_output_token_limit = 25000
+personality = "pragmatic"
+web_search = "live"
+
+[memories]
+use_memories = false
+generate_memories = false
