@@ -7,6 +7,7 @@ pinned Pi packages, applies the tracked patches, and links these files into
 
 - `AGENTS.md` (from `llm/shared/AGENTS.md`)
 - `extensions/btw-autocomplete.ts`
+- `extensions/escape-send-queued.ts`
 - `extensions/project-status.ts`
 - `extensions/mutation-stats.ts`
 - `extensions/turn-timer.ts`
@@ -59,4 +60,11 @@ The tracked `turn-timer` extension adds elapsed time to Pi's working indicator,
 shows `pi (.../parent/project)` plus an optional session name in the terminal
 tab, animates the tab while Pi is active, and writes a Codex-style
 `Worked for ...` divider when each agent run settles. Cancellations longer than
-one minute instead render as `Operation aborted (worked for ...)` on one line.
+one minute get an `Aborted after ...` divider instead.
+
+The tracked `escape-send-queued` extension makes Escape during a run with
+queued messages abort the turn and send the queue immediately, as Claude Code
+does. Without a queue, Escape interrupts as usual. Pi reserves Escape for its
+own interrupt, so the extension intercepts raw terminal input and recovers the
+queued text from the editor, where Pi's abort restores it. Only text survives:
+extension-queued images and custom messages are dropped, as with stock Escape.

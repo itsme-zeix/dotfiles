@@ -163,7 +163,9 @@ apply_tracked_patch() {
 register_links
 preflight_links
 
-if [[ -f "$PI_PACKAGE_DIR/package.json" ]]; then
+# A bundle containing 'to send now' is the source-patched build an earlier
+# version of this script installed; replace it with the stock release.
+if [[ -f "$PI_PACKAGE_DIR/package.json" ]] && ! grep -rFq 'to send now' "$PI_PACKAGE_DIR/dist/bundle" 2>/dev/null; then
 	assert_package_version Pi "$PI_PACKAGE_DIR" "$PI_VERSION"
 else
 	npm install -g --ignore-scripts "@earendil-works/pi-coding-agent@$PI_VERSION"
@@ -197,8 +199,5 @@ pi install npm:pi-mono-btw@1.7.4
 
 assert_package_version pi-subagents "$SUBAGENTS_PACKAGE_DIR" "$SUBAGENTS_VERSION"
 apply_tracked_patch "pi-subagents static step indicators" "$SUBAGENTS_PACKAGE_DIR" "$SCRIPT_DIR/patches/pi-subagents-static-steps.patch"
-apply_tracked_patch "Pi abort message handling" "$PI_PACKAGE_DIR" "$SCRIPT_DIR/patches/pi-abort-message.patch"
-apply_tracked_patch "Pi extension title lifecycle" "$PI_PACKAGE_DIR" "$SCRIPT_DIR/patches/pi-extension-title.patch"
-apply_tracked_patch "Pi Escape sends queued messages" "$PI_PACKAGE_DIR" "$SCRIPT_DIR/patches/pi-escape-send-queued.patch"
 
 install_links

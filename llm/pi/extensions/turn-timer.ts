@@ -10,6 +10,7 @@ const WORKING_FRAMES = ["⠖", "⠲", "⢲", "⢰", "⣰", "⣠", "⣄", "⣆", 
 
 type TimerEntry = {
 	durationMs: number;
+	aborted?: boolean;
 };
 
 function formatDuration(durationMs: number): string {
@@ -40,8 +41,9 @@ class TimerDivider {
 	invalidate(): void {}
 
 	render(width: number): string[] {
+		const verb = this.data.aborted ? "Aborted after" : "Worked for";
 		const label = this.data.durationMs > WORKED_LABEL_THRESHOLD_MS
-			? ` Worked for ${formatDuration(this.data.durationMs)} `
+			? ` ${verb} ${formatDuration(this.data.durationMs)} `
 			: "";
 		const left = "─";
 		const right = "─".repeat(Math.max(0, width - visibleWidth(left + label)));
@@ -115,6 +117,10 @@ export default function turnTimer(pi: ExtensionAPI): void {
 
 	pi.on("session_start", (_event, ctx) => {
 		ctx.ui.setTitle(baseTitle(ctx));
+		// Pi sets its own title after session_start handlers finish rebinding; reapply after it.
+		setTimeout(() => {
+			if (startedAt === undefined) ctx.ui.setTitle(baseTitle(ctx));
+		}, 0);
 	});
 
 	pi.on("session_info_changed", (_event, ctx) => {
@@ -141,32 +147,22 @@ export default function turnTimer(pi: ExtensionAPI): void {
 		if (startedAt !== undefined) hadToolActivity = true;
 	});
 
-	pi.on("message_end", (event) => {
-		if (startedAt === undefined || event.message.role !== "assistant" || event.message.stopReason !== "aborted") {
-			return;
-		}
-
-		wasAborted = true;
-		const durationMs = Date.now() - startedAt;
-		if (durationMs <= WORKED_LABEL_THRESHOLD_MS) return;
-
-		return {
-			message: {
-				...event.message,
-				errorMessage: `Operation aborted (worked for ${formatDuration(durationMs)})`,
-			},
-		};
+	// The run's signal is still live here and covers aborts during tool calls too.
+	pi.on("agent_end", (_event, ctx) => {
+		if (ctx.signal?.aborted) wasAborted = true;
 	});
 
 	pi.on("agent_settled", (_event, ctx) => {
 		if (startedAt === undefined) return;
 		const durationMs = Date.now() - startedAt;
-		const showDivider = hadToolActivity && !wasAborted;
+		const aborted = wasAborted;
+		// Pi overwrites errorMessage on aborted messages, so long cancellations get a divider instead.
+		const showDivider = aborted ? durationMs > WORKED_LABEL_THRESHOLD_MS : hadToolActivity;
 		startedAt = undefined;
 		hadToolActivity = false;
 		wasAborted = false;
 		resetWorkingIndicator(ctx);
-		if (showDivider) pi.appendEntry<TimerEntry>(TIMER_ENTRY, { durationMs });
+		if (showDivider) pi.appendEntry<TimerEntry>(TIMER_ENTRY, { durationMs, aborted });
 	});
 
 	pi.on("session_shutdown", (_event, ctx) => {
