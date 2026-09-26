@@ -10,6 +10,7 @@ pinned Pi packages, applies the tracked patches, and links these files into
 - `extensions/escape-send-queued.ts`
 - `extensions/project-status.ts`
 - `extensions/mutation-stats.ts`
+- `extensions/subagent-cost.ts`
 - `extensions/turn-timer.ts`
 - `extensions/workflow.ts`
 - `skills/<name>/` (from `llm/shared/skills/`)
@@ -55,6 +56,21 @@ Pi already provides `/copy` for copying the last assistant response.
 The tracked `mutation-stats` extension preserves Pi's built-in edit and write
 renderers while adding Codex-style `(+N -M)` line counts to completed mutation
 headers.
+
+The tracked `subagent-cost` extension reports delegated subagent spend back to
+Pi. `pi-subagents` records child token and cost totals under the tool result's
+`details`, which Pi's session totals ignore, so delegated work was missing from
+the footer, `/session`, and RPC cost totals. The extension re-reports the
+combined child usage as tool result `usage`, which restores it to every total Pi
+derives from the session.
+
+Runs that finish inside their `subagent` call are counted from the totals on that
+result. Async runs have no cost at launch, so they are counted when
+`subagent_wait` delivers the completion, by reading each child's session file.
+Reported totals are tracked per child session, so a resumed run contributes only
+its new spend. The remaining gap is an async run whose completion arrives solely
+as a custom message wake: custom messages cannot carry usage, and Pi counts child
+sessions only once their cost reaches the parent session.
 
 The tracked `turn-timer` extension adds elapsed time to Pi's working indicator,
 shows `pi (.../parent/project)` plus an optional session name in the terminal
