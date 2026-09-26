@@ -2,7 +2,7 @@
 
 - **Ask, don't assume:** If intent, requirements, or architecture are unclear, ask before changing files. When running unattended, choose a reasonable interpretation, proceed, and state the assumption.
 - **Keep scope focused:** Don't change unrelated code. Surface problems you notice as separate issues rather than fixing them without approval.
-- **Be clear about uncertainty:** Say what you don't know. When useful, run a small, low-risk experiment and report what it showed.
+- **Be clear about uncertainty:** Say what you don't know, because sounding sure when you aren't does more damage than admitting you don't know. When useful, run a small, low-risk experiment and report what it showed.
 - **Suggest better approaches:** Offer an alternative when it has a meaningful long-term benefit. Explain the tradeoff, but don't expand the task without approval.
 
 ## How to approach code changes
