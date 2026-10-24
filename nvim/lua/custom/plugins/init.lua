@@ -104,7 +104,6 @@ return {
         },
       },
       spec = {
-        { '<leader>c', group = '[C]opilot', mode = { 'n', 'v' } },
         { '<leader>s', group = '[S]earch' },
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
@@ -208,7 +207,6 @@ return {
           },
         },
       },
-      quickfile = { enabled = false },
       words = { enabled = true },
     },
     keys = {
@@ -469,7 +467,7 @@ return {
       end
 
       local ensure_installed = vim.tbl_keys(servers or {})
-      vim.list_extend(ensure_installed, { 'stylua', 'alejandra' })
+      vim.list_extend(ensure_installed, { 'stylua', 'alejandra', 'shfmt' })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
@@ -482,7 +480,6 @@ return {
   -- Autoformat
   {
     'stevearc/conform.nvim',
-    event = { 'BufWritePre' },
     cmd = { 'ConformInfo' },
     keys = {
       {
@@ -503,6 +500,19 @@ return {
         lua = { 'stylua' },
         nix = { 'alejandra' },
         python = { 'ruff_format' },
+        sh = { 'shfmt' },
+        bash = { 'shfmt' },
+        terraform = { 'terraform_fmt' },
+        javascript = { 'prettier' },
+        javascriptreact = { 'prettier' },
+        typescript = { 'prettier' },
+        typescriptreact = { 'prettier' },
+        json = { 'prettier' },
+        jsonc = { 'prettier' },
+        yaml = { 'prettier' },
+        css = { 'prettier' },
+        html = { 'prettier' },
+        markdown = { 'prettier' },
       },
     },
   },
@@ -513,15 +523,6 @@ return {
     event = 'VimEnter',
     version = '1.*',
     dependencies = {
-      {
-        'L3MON4D3/LuaSnip',
-        version = '2.*',
-        build = (function()
-          if vim.fn.has 'win32' == 1 or vim.fn.executable 'make' == 0 then return end
-          return 'make install_jsregexp'
-        end)(),
-        opts = {},
-      },
       'folke/lazydev.nvim',
     },
     opts = {
@@ -531,12 +532,11 @@ return {
         documentation = { auto_show = false, auto_show_delay_ms = 500 },
       },
       sources = {
-        default = { 'lsp', 'path', 'snippets', 'lazydev' },
+        default = { 'lsp', 'path', 'lazydev' },
         providers = {
           lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
         },
       },
-      snippets = { preset = 'luasnip' },
       fuzzy = { implementation = 'lua' },
       signature = { enabled = true },
     },
@@ -673,16 +673,5 @@ return {
     'windwp/nvim-autopairs',
     event = 'InsertEnter',
     config = function() require('nvim-autopairs').setup {} end,
-  },
-
-  -- Distant (remote development)
-  {
-    'chipsenkbeil/distant.nvim',
-    branch = 'v0.3',
-    config = function()
-      local distant = require 'distant'
-      ---@diagnostic disable-next-line: missing-parameter
-      distant:setup()
-    end,
   },
 }
