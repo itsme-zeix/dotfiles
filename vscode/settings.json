@@ -7,6 +7,9 @@
   "workbench.editor.tabSizing": "shrink",
   "breadcrumbs.enabled": true,
 
+  "git.detectWorktrees": true,
+  "git.repositoryScanMaxDepth": 6,
+
   "catppuccin.accentColor": "blue",
   "catppuccin.workbenchMode": "flat",
   "catppuccin.colorOverrides": {
@@ -65,10 +68,29 @@
   "vim.visualstar": true,
   "vim.camelCaseMotion.enable": true,
 
+  "errorLens.messageBackgroundMode": "none",
+  "errorLens.gutterIconsEnabled": true,
+  "errorLens.enabledDiagnosticLevels": ["error", "warning", "info", "hint"],
+
   "extensions.experimental.affinity": {
     "vscodevim.vim": 1
   },
   "workbench.secondarySideBar.defaultVisibility": "hidden",
   "python.languageServer": "Default",
-  "workbench.colorTheme": "Catppuccin Mocha"
+  "workbench.colorTheme": "Catppuccin Mocha",
+
+// === TO DISABLE AI ===
+//   "C_Cpp.autocomplete": "disabled",
+//   "editor.quickSuggestions": {
+//     "other": "off",
+//     "comments": "off",
+//     "strings": "off"
+//   },
+//   "editor.suggestOnTriggerCharacters": false,
+//   "editor.acceptSuggestionOnEnter": "off",
+//   "editor.acceptSuggestionOnCommitCharacter": false,
+//   "editor.parameterHints.enabled": true,
+//   "editor.inlineSuggest.enabled": false,
+//   "terminal.integrated.suggest.enabled": false,
+//   "chat.disableAIFeatures": true
 }
