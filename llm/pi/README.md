@@ -15,8 +15,8 @@ Set `PI_CODING_AGENT_DIR` to use another agent directory.
 - Pi-specific skills and extensions link from this directory.
 
 New shared skills are available through the folder link without rerunning setup.
-To sync shared and Pi-specific skill links, run `./llm/pi/update-skill-symlinks.sh`; the installer
-also calls it. Set `SHARED_SKILLS_DIR` to use a different source folder.
+To sync the instructions and skill links, run `./llm/pi/update-symlinks.sh`; the installer
+also calls it. Set `SHARED_DIR` to use a different shared folder.
 Use `/skill:<name>` to invoke a skill. The installer preserves unrelated files
 and refuses conflicting destinations.
 

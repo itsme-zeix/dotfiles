@@ -61,8 +61,6 @@ is_legacy_link() {
 register_links() {
 	local source
 	local name
-	add_link "$DOTFILES_DIR/llm/shared/AGENTS.md" "$PI_AGENT_DIR/AGENTS.md"
-	add_legacy_link "$DOTFILES_DIR/pi/AGENTS.md" "$PI_AGENT_DIR/AGENTS.md"
 	for source in "$SCRIPT_DIR"/extensions/*.ts; do
 		[[ -e "$source" ]] || continue
 		name="$(basename -- "$source")"
@@ -144,7 +142,7 @@ apply_tracked_patch() {
 
 register_links
 preflight_links
-"$SCRIPT_DIR/update-skill-symlinks.sh"
+"$SCRIPT_DIR/update-symlinks.sh"
 
 # A bundle containing 'to send now' is the source-patched build an earlier
 # version of this script installed; replace it with the stock release.
