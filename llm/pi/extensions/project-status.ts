@@ -5,7 +5,11 @@ type ProjectState = {
 	changedFiles?: number;
 	prNumber?: string;
 	tokensPerSecond?: number;
+	ttftSeconds?: number;
 };
+
+// The first content event of an assistant message; used to separate time-to-first-token from decode time.
+const FIRST_CONTENT_EVENTS = new Set(["text_start", "text_delta", "thinking_start", "thinking_delta", "toolcall_start", "toolcall_delta"]);
 
 const FOOTER_PADDING = 1;
 
@@ -50,6 +54,8 @@ function displayCwd(cwd: string): string {
 export default function projectStatus(pi: ExtensionAPI): void {
 	const state: ProjectState = {};
 	let requestRender: (() => void) | undefined;
+	let responseStartedAt: number | undefined;
+	let firstTokenAt: number | undefined;
 
 	async function refreshProject(ctx: ExtensionContext): Promise<void> {
 		const [git, pr] = await Promise.all([
@@ -68,6 +74,10 @@ export default function projectStatus(pi: ExtensionAPI): void {
 	}
 
 	pi.on("session_start", async (_event, ctx) => {
+		state.tokensPerSecond = undefined;
+		state.ttftSeconds = undefined;
+		responseStartedAt = undefined;
+		firstTokenAt = undefined;
 		if (ctx.mode !== "tui") return;
 
 		ctx.ui.setFooter((tui, theme, footerData) => {
@@ -120,6 +130,9 @@ export default function projectStatus(pi: ExtensionAPI): void {
 						theme.fg("syntaxNumber", `$${sessionCost(ctx).toFixed(3)}`),
 						theme.fg(contextColor, `${percent}%/${formatTokens(contextWindow)}`),
 					];
+					if (state.ttftSeconds !== undefined) {
+						metrics.push(theme.fg("muted", `${state.ttftSeconds.toFixed(2)}s ttft`));
+					}
 					if (state.tokensPerSecond !== undefined) {
 						metrics.push(theme.fg("muted", `${state.tokensPerSecond.toFixed(1)} tps`));
 					}
@@ -139,11 +152,32 @@ export default function projectStatus(pi: ExtensionAPI): void {
 		await refreshProject(ctx);
 	});
 
-	pi.on("message_end", (event, ctx) => {
-		if (event.message.role !== "assistant" || event.message.usage.output <= 0) return;
+	pi.on("message_start", (event) => {
+		if (event.message.role !== "assistant") return;
+		responseStartedAt = event.message.timestamp;
+		firstTokenAt = undefined;
+		state.ttftSeconds = undefined;
+		state.tokensPerSecond = undefined;
+	});
 
-		const elapsedSeconds = (Date.now() - event.message.timestamp) / 1_000;
-		if (elapsedSeconds > 0) state.tokensPerSecond = event.message.usage.output / elapsedSeconds;
+	pi.on("message_update", (event) => {
+		if (event.message.role !== "assistant" || firstTokenAt !== undefined || responseStartedAt === undefined) return;
+		if (!FIRST_CONTENT_EVENTS.has(event.assistantMessageEvent.type)) return;
+
+		firstTokenAt = Date.now();
+		state.ttftSeconds = (firstTokenAt - responseStartedAt) / 1_000;
+		requestRender?.();
+	});
+
+	pi.on("message_end", (event) => {
+		if (event.message.role !== "assistant") return;
+
+		if (event.message.usage.output > 0 && firstTokenAt !== undefined) {
+			const decodeSeconds = (Date.now() - firstTokenAt) / 1_000;
+			if (decodeSeconds > 0) state.tokensPerSecond = event.message.usage.output / decodeSeconds;
+		}
+		responseStartedAt = undefined;
+		firstTokenAt = undefined;
 		requestRender?.();
 	});
 

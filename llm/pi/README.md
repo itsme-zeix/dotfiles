@@ -46,7 +46,7 @@ question.
 
 The tracked `project-status` extension renders a compact one-line footer with
 the current directory, Git branch and change count, GitHub PR, extension
-statuses, cost, context usage, response speed, model, and effort. Run
+statuses, cost, context usage, the latest assistant message's time-to-first-token and tokens/s, model, and effort. Run
 `/status-refresh` to refresh Git and PR state manually.
 
 The tracked `workflow` extension adds a transcript-native `/diff` viewer and a
