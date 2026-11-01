@@ -7,6 +7,7 @@
 
 ## Keep code easy to follow
 
+- Simple code beats strict rules. If a rule here or in a skill would make the code harder to follow, skip it and say so.
 - Make the smallest change that solves the problem. Before you add a helper, option, or layer, ask what it simplifies today, not someday.
 - Delete before you add. Remove dead code, unused paths, and checks for cases that can't happen. When you replace an approach, remove the old one.
 - Keep the path through the code short. Inline wrappers that have one caller and layers that only pass calls along. Prefer local variables and return values over shared state that changes.
