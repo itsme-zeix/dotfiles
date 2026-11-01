@@ -58,13 +58,6 @@ is_legacy_link() {
 	return 1
 }
 
-is_legacy_skill_dir() {
-	local target="$1"
-	[[ -d "$target" && ! -L "$target" ]] || return 1
-	[[ "$(ls -A "$target")" == "SKILL.md" ]] || return 1
-	is_legacy_link "$target/SKILL.md"
-}
-
 register_links() {
 	local source
 	local name
@@ -79,15 +72,6 @@ register_links() {
 	for name in review review-and-simplify simplify pattern-scout devils-advocate; do
 		add_legacy_link "$DOTFILES_DIR/pi/prompts/$name.md" "$PI_AGENT_DIR/prompts/$name.md"
 	done
-	for name in adversarial-review ketch-research local-simplifier pattern-scout; do
-		add_legacy_link "$DOTFILES_DIR/pi/skills/$name/SKILL.md" "$PI_AGENT_DIR/skills/$name/SKILL.md"
-	done
-	add_legacy_link "$DOTFILES_DIR/llm/shared/skills/ketch-research" "$PI_AGENT_DIR/skills/ketch-research"
-	for source in "$DOTFILES_DIR"/llm/shared/skills/* "$SCRIPT_DIR"/skills/*; do
-		[[ -d "$source" ]] || continue
-		name="$(basename -- "$source")"
-		add_link "$source" "$PI_AGENT_DIR/skills/$name"
-	done
 }
 
 preflight_links() {
@@ -98,7 +82,7 @@ preflight_links() {
 		source="${LINK_SOURCES[$index]}"
 		target="${LINK_TARGETS[$index]}"
 		[[ -e "$source" ]] || { printf 'Missing source: %s\n' "$source" >&2; exit 1; }
-		if is_link_to "$source" "$target" || is_legacy_link "$target" || is_legacy_skill_dir "$target"; then
+		if is_link_to "$source" "$target" || is_legacy_link "$target"; then
 			continue
 		fi
 		if [[ -e "$target" || -L "$target" ]]; then
@@ -125,9 +109,6 @@ install_links() {
 		target="${LINK_TARGETS[$index]}"
 		if is_link_to "$source" "$target"; then
 			continue
-		fi
-		if [[ -d "$target" && ! -L "$target" ]]; then
-			rmdir "$target"
 		fi
 		mkdir -p "$(dirname -- "$target")"
 		ln -s "$source" "$target"
@@ -163,6 +144,7 @@ apply_tracked_patch() {
 
 register_links
 preflight_links
+"$SCRIPT_DIR/update-skill-symlinks.sh"
 
 # A bundle containing 'to send now' is the source-patched build an earlier
 # version of this script installed; replace it with the stock release.
