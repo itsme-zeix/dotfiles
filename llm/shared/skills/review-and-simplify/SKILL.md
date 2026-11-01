@@ -1,16 +1,25 @@
 ---
 name: review-and-simplify
-description: Review current changes and recommend behavior-preserving simplifications and cleaner patterns without editing files.
+description: Reviews changes for bugs and suggests simplifications and cleaner patterns in one run, without editing files.
+disable-model-invocation: true
 ---
 
-# Review and Simplify
+# Review and simplify
 
-Review the current working-tree changes, using any focus supplied with the invocation. This is read-only: do not edit files, commit, push, or post comments remotely.
+Run a review, a simplify pass, and a pattern scout on the same target in one go. Pick the target the way `../review/SKILL.md` does, and use any focus given with the command. Don't edit files, commit, push, or post comments.
 
-Read repository instructions, inspect staged, unstaged, and untracked changes, and then read the surrounding code and tests needed to understand them. Keep recommendations within the changed scope.
+## Hand off
 
-Launch four fresh, read-only subagent passes: two independent correctness reviews of the same target, one search for behavior-preserving simplifications, and one search for cleaner patterns. Give each the target and relevant criteria, and require direct inspection of the repository without edits. The pattern scout may search the web when external evidence would change a recommendation. Run passes in waves if the host limits concurrency. Do not share conclusions between passes before they finish. If subagents are unavailable, perform the passes yourself and disclose the fallback.
+Launch four fresh, read-only subagents (not forks of this conversation). Give each the exact target and the goal of the change if you know it:
 
-Validate every candidate against the diff, code, and tests. Separate correctness findings from behavior-preserving simplification and pattern recommendations, and identify dependencies between them. Do not implement recommendations.
+- Two independent reviewers, each with the Criteria section of `../review/SKILL.md`.
+- One simplifier, with the Criteria section of `../simplify-changes/SKILL.md`.
+- One pattern scout, with the Criteria section of `../pattern-scout/SKILL.md`. Tell it to skip simplifications inside the changed code, since the simplifier covers those.
 
-Report correctness findings first by severity with exact file and line references, impact, cause, and minimal remediation direction. Then report worthwhile simplifications and patterns with benefits and tradeoffs. Explain any material suggestion you rejected or could not verify. If there are no material findings or recommendations, say so.
+Ask each for findings with file and line. Don't share findings between them. If subagents aren't available, do the passes yourself and say so.
+
+## Report
+
+Check every finding against the diff, code, and tests, and merge duplicates. Don't apply anything.
+
+List bugs first, most severe first, with file and line, what goes wrong, the cause, and the smallest fix. Then list worthwhile simplifications and patterns with their benefit and tradeoff. Say when a simplification would also fix, or conflict with, a bug. Mention any notable suggestion you dropped or couldn't check. If there's nothing worth reporting, say so.

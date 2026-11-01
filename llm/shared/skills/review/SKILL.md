@@ -1,16 +1,29 @@
 ---
 name: review
-description: Review a diff or working-tree changes for material bugs, regressions, and missing tests without editing files.
+description: Reviews a diff, commit, branch, PR, or working-tree changes for real bugs, regressions, and missing tests, without editing files.
+disable-model-invocation: true
 ---
 
 # Review
 
-Review the target supplied with the invocation. If none is supplied, review staged, unstaged, and untracked working-tree changes. This is read-only: do not edit files, commit, push, or post comments remotely.
+Review the target given with the command: a diff, commit, branch, or PR. If none is given, review the working-tree changes: `git diff HEAD` plus the untracked files `git status` lists. Don't edit files, commit, push, or post comments.
 
-Read repository instructions and inspect the diff before surrounding code. Look for correctness failures, regressions, security boundary violations, misleading or missing tests, and concrete maintenance risks introduced by the change. Reject speculative, stylistic, and pre-existing complaints.
+## Hand off
 
-Launch two fresh, read-only subagents to review the same target independently. Give each the review criteria above and require findings with exact file and line references. Do not share either pass's conclusions with the other. If subagents are unavailable, review directly and disclose the fallback.
+Launch two fresh, read-only subagents (not forks of this conversation) to review the same target independently. Give each the exact target, the goal of the change if you know it but not your reasoning about the code, and the Criteria section below. Ask each to return findings with file and line, what goes wrong, and the change that causes it. Don't share one pass's findings with the other. If subagents aren't available, review it yourself and say so.
 
-Validate every candidate against the diff, relevant code, and tests. Deduplicate overlapping findings; agreement is not a substitute for validation.
+## Criteria
 
-Report findings first, ordered by severity. For each, include an exact file and line, concrete impact, the changed behavior causing it, and a minimal remediation direction. Then list assumptions and verification gaps. If there are no material findings, say so explicitly.
+Read the repository instructions, then the diff, then the surrounding code and tests you need. Report only:
+
+- Bugs and regressions the change introduces.
+- Security holes the change opens.
+- Tests that are wrong or misleading, and missing tests only where a realistic bug in the change would go uncaught.
+
+Skip style, speculation, and problems that existed before the change. Finding nothing is a valid result.
+
+## Report
+
+Check every finding against the diff, code, and tests yourself, and merge duplicates. Two passes agreeing doesn't make a finding true.
+
+List findings first, most severe first. For each, give the file and line, what goes wrong, the change that causes it, and the smallest fix. Then list assumptions and anything you couldn't check. If there are no findings, say so.
