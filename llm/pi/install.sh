@@ -82,7 +82,8 @@ register_links() {
 	for name in adversarial-review ketch-research local-simplifier pattern-scout; do
 		add_legacy_link "$DOTFILES_DIR/pi/skills/$name/SKILL.md" "$PI_AGENT_DIR/skills/$name/SKILL.md"
 	done
-	for source in "$DOTFILES_DIR"/llm/shared/skills/*; do
+	add_legacy_link "$DOTFILES_DIR/llm/shared/skills/ketch-research" "$PI_AGENT_DIR/skills/ketch-research"
+	for source in "$DOTFILES_DIR"/llm/shared/skills/* "$SCRIPT_DIR"/skills/*; do
 		[[ -d "$source" ]] || continue
 		name="$(basename -- "$source")"
 		add_link "$source" "$PI_AGENT_DIR/skills/$name"

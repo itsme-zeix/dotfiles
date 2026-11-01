@@ -13,7 +13,7 @@ pinned Pi packages, applies the tracked patches, and links these files into
 - `extensions/subagent-cost.ts`
 - `extensions/turn-timer.ts`
 - `extensions/workflow.ts`
-- `skills/<name>/` (from `llm/shared/skills/`)
+- `skills/<name>/` (from `llm/shared/skills/` and `llm/pi/skills/`)
 
 The installer checks all link targets before changing them, replaces only links
 from the previous Pi layout, and stops on unrelated files. It does not manage

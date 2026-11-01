@@ -9,7 +9,7 @@ Review the current working-tree changes, using any focus supplied with the invoc
 
 Read repository instructions, inspect staged, unstaged, and untracked changes, and then read the surrounding code and tests needed to understand them. Keep recommendations within the changed scope.
 
-Launch four fresh, read-only subagent passes: two independent correctness reviews of the same target, one search for behavior-preserving simplifications, and one search for cleaner patterns. Give each the target and relevant criteria, and require direct inspection of the repository without edits. The pattern scout may use `ketch-research` when external evidence would change a recommendation. Run passes in waves if the host limits concurrency. Do not share conclusions between passes before they finish. If subagents are unavailable, perform the passes yourself and disclose the fallback.
+Launch four fresh, read-only subagent passes: two independent correctness reviews of the same target, one search for behavior-preserving simplifications, and one search for cleaner patterns. Give each the target and relevant criteria, and require direct inspection of the repository without edits. The pattern scout may search the web when external evidence would change a recommendation. Run passes in waves if the host limits concurrency. Do not share conclusions between passes before they finish. If subagents are unavailable, perform the passes yourself and disclose the fallback.
 
 Validate every candidate against the diff, code, and tests. Separate correctness findings from behavior-preserving simplification and pattern recommendations, and identify dependencies between them. Do not implement recommendations.
 
