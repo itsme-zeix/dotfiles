@@ -125,3 +125,18 @@ export PATH="/opt/homebrew/opt/findutils/libexec/gnubin:$PATH"
 
 # Source - https://stackoverflow.com/a/52093887
 alias gdnew="for next in \$( git ls-files --others --exclude-standard ) ; do git --no-pager diff --no-index /dev/null \$next; done;"
+
+# git diff --stat for untracked (new) files, aggregated into one summary.
+# Uses a throwaway index, so your real index/staging is never touched.
+gdnewstat() (
+ local idx files
+ idx=$(mktemp) && rm -f "$idx" || return 1
+ files=$(mktemp) || return 1
+ trap 'rm -f "$idx" "$files"' EXIT
+
+ git ls-files --others --exclude-standard -z > "$files" || return 1
+ [ -s "$files" ] || { echo "gdnewstat: no untracked files" >&2; return 0; }
+
+ GIT_INDEX_FILE=$idx xargs -0 git add -N -- < "$files" || return 1
+ GIT_INDEX_FILE=$idx git --no-pager diff --stat
+)
