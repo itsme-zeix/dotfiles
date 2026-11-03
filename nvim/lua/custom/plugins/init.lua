@@ -656,6 +656,13 @@ return {
     end,
   },
 
+  -- Render markdown in the buffer (:RenderMarkdown toggle)
+  {
+    'MeanderingProgrammer/render-markdown.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' },
+    opts = {},
+  },
+
   -- Indent rainbow lines
   {
     'lukas-reineke/indent-blankline.nvim',
